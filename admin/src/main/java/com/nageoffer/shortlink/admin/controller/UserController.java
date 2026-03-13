@@ -1,7 +1,7 @@
 package com.nageoffer.shortlink.admin.controller;
 
-import com.nageoffer.shortlink.admin.common.convention.Result;
-import com.nageoffer.shortlink.admin.common.exceptions.NullValueException;
+import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.common.exceptions.ClientException;
 import com.nageoffer.shortlink.admin.dto.resp.UserRespDTO;
 import com.nageoffer.shortlink.admin.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class UserController {
 
 
     @GetMapping("/api/shortlink/v1/user/{username}")
-    public ResponseEntity<Result<UserRespDTO>> getUserByUsername(@PathVariable("username") String username) throws NullValueException {
+    public ResponseEntity<Result<UserRespDTO>> getUserByUsername(@PathVariable("username") String username) throws ClientException {
         return ResponseEntity.status(200)
                 .body(new Result<UserRespDTO>().setCode("0").setData(userService.getUserByUsername(username)).setMessage("查询成功"));
     }
