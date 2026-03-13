@@ -11,6 +11,6 @@ public class ExceptionConfig {
     @ExceptionHandler(NullValueException.class)
     public ResponseEntity<Result<Object>> handleNullValueException(NullValueException e){
         return ResponseEntity.status(400)
-                .body(new Result<>().setMessage(e.getMessage()).setCode("1"));
+                .body(new Result<>().setMessage(e.message()).setCode(e.code()));
     }
 }
