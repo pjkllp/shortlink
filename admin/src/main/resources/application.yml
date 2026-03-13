@@ -1,0 +1,15 @@
+server:
+  port: 8002
+
+spring:
+  datasource:
+    username: root
+    password: Root@123456
+    url: jdbc:mysql://192.168.100.152:3306/Link
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      connection-test-query: select 1
+      connection-timeout: 20000
+      idle-timeout: 300000
+      maximum-pool-size: 5
+      minimum-idle: 5

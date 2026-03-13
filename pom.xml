@@ -20,6 +20,11 @@
             <organization>Apache and openGoofy</organization>
         </developer>
     </developers>
+    <modules>
+        <module>admin</module>
+        <module>project</module>
+        <module>gateway</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>
@@ -151,10 +156,10 @@
                         <!--<eclipse>
                             <file>${maven.multiModuleProjectDirectory}/format/short-link_spotless_formatter.xml</file>
                         </eclipse>-->
-                        <licenseHeader>
-                            <!-- ${maven.multiModuleProjectDirectory} 爆红属于正常，并不影响编译或者运行，忽略就好 -->
-                            <file>${maven.multiModuleProjectDirectory}/format/license-header</file>
-                        </licenseHeader>
+<!--                        <licenseHeader>-->
+<!--                            &lt;!&ndash; ${maven.multiModuleProjectDirectory} 爆红属于正常，并不影响编译或者运行，忽略就好 &ndash;&gt;-->
+<!--                            <file>${maven.multiModuleProjectDirectory}/format/license-header</file>-->
+<!--                        </licenseHeader>-->
                     </java>
                 </configuration>
                 <executions>
