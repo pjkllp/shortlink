@@ -1,5 +1,6 @@
 package com.nageoffer.shortlink.admin.common.convention.result;
 
+import com.nageoffer.shortlink.admin.common.convention.errorcode.IErrorCode;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -43,5 +44,27 @@ public class Result<T> implements Serializable {
 
     public boolean isSuccess(){
         return SUCCESS_CODE.equals(code);
+    }
+    public static <T> Result<T> success(){
+        return new Result<T>().setCode("0");
+    }
+    public static <T> Result<T> success(String message){
+        return new Result<T>().setCode("0").setMessage(message);
+    }
+
+    public static <T> Result<T> success(String message,T data){
+        return new Result<T>().setMessage(message).setData(data).setCode("0");
+    }
+
+    public static <T> Result<T> success(T data){
+        return new Result<T>().setCode("0").setData(data);
+    }
+
+    public static <T> Result<T> fail(IErrorCode iErrorCode){
+        return new Result<T>().setCode(iErrorCode.code()).setMessage(iErrorCode.message());
+    }
+
+    public static <T> Result<T> fail(T data,IErrorCode iErrorCode){
+        return new Result<T>().setMessage(iErrorCode.message()).setCode(iErrorCode.code()).setData(data);
     }
 }

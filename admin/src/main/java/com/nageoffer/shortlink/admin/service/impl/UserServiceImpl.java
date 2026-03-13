@@ -13,9 +13,25 @@ import com.nageoffer.shortlink.admin.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements UserService {
+    @Override
+    public Boolean hasUsername(String username) {
+        LambdaQueryWrapper<UserDO> eq = Wrappers.lambdaQuery(UserDO.class)
+                .eq(UserDO::getUsername, username);
+        List<UserDO> userDOS = baseMapper.selectList(eq);
+        if(userDOS.isEmpty()){
+            return false;
+        }else if(userDOS.size()==1){
+            return true;
+        }else {
+            throw new ClientException("用户数据异常", UserErrorCode.USER_DATAEORRO);
+        }
+    }
+
     @Override
     public UserRespDTO getUserByUsername(String username) throws ClientException {
         LambdaQueryWrapper<UserDO> eq = Wrappers.lambdaQuery(UserDO.class)
