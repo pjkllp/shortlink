@@ -10,7 +10,7 @@
             <result property="password" column="password" />
             <result property="realName" column="real_name" />
             <result property="phone" column="phone" />
-            <result property="maii" column="maii" />
+            <result property="mail" column="mail" />
             <result property="deletionTime" column="deletion_time" />
             <result property="createTime" column="create_time" />
             <result property="updateTime" column="update_time" />

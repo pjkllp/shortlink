@@ -43,5 +43,25 @@
             <groupId>org.apache.shardingsphere</groupId>
             <artifactId>shardingsphere-jdbc-core</artifactId>
         </dependency>
+        <!-- 1. JWT 核心接口（compile 范围，编译时需要） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <!-- 2. JWT 接口实现（runtime 范围，运行时必须加载） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope> <!-- 关键：运行时依赖，必须加 -->
+        </dependency>
+        <!-- 3. JWT JSON 序列化支持（runtime 范围，解决 Serializer 依赖） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope> <!-- 关键：运行时依赖，必须加 -->
+        </dependency>
     </dependencies>
 </project>

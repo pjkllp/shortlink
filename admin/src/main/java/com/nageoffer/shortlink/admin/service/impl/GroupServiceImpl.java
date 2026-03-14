@@ -1,4 +1,10 @@
 package com.nageoffer.shortlink.admin.service.impl;
 
-public class GroupServiceImpl {
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
+import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
+import com.nageoffer.shortlink.admin.service.GroupService;
+
+public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
+
 }
