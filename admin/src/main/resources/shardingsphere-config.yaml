@@ -1,0 +1,33 @@
+# 数据源配置
+dataSources:
+  ds_0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver  # MySQL8.x 推荐驱动，5.x用com.mysql.jdbc.Driver
+    jdbcUrl: jdbc:mysql://192.168.100.152:3306/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: Root@123456
+    # Hikari连接池配置（注意属性名是驼峰式，不是横线式）
+    maximumPoolSize: 10
+    minimumIdle: 5
+    connectionTimeout: 30000
+
+# 分片规则（和dataSources同级）
+rules:
+  - !SHARDING  # 核心修正：替换!FOO_XXX为!SHARDING
+    tables:  # 注意是tables（复数）
+      t_user:
+        actualDataNodes: ds_0.t_user_${0..4}
+        tableStrategy:
+          standard:
+            shardingColumn: username  # 注意：HASH_MOD适合数字列，字符串建议用INLINE算法
+            shardingAlgorithmName: user_table_hash_mod
+    # 分片算法配置
+    shardingAlgorithms:
+      user_table_hash_mod:
+        type: HASH_MOD
+        props:
+          sharding-count: 5
+
+# 属性配置（和dataSources同级）
+props:
+  sql-show: true
