@@ -2,32 +2,54 @@
 dataSources:
   ds_0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-    driverClassName: com.mysql.cj.jdbc.Driver  # MySQL8.x 推荐驱动，5.x用com.mysql.jdbc.Driver
+    driverClassName: com.mysql.cj.jdbc.Driver
     jdbcUrl: jdbc:mysql://192.168.100.152:3306/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: Root@123456
-    # Hikari连接池配置（注意属性名是驼峰式，不是横线式）
     maximumPoolSize: 10
     minimumIdle: 5
     connectionTimeout: 30000
 
-# 分片规则（和dataSources同级）
+# 规则配置（重点：与dataSources同级）
 rules:
-  - !SHARDING  # 核心修正：替换!FOO_XXX为!SHARDING
-    tables:  # 注意是tables（复数）
+  # 1. 分片规则（独立区块，必须用 !SHARDING）
+  - !SHARDING
+    tables:
       t_user:
         actualDataNodes: ds_0.t_user_${0..4}
         tableStrategy:
           standard:
-            shardingColumn: username  # 注意：HASH_MOD适合数字列，字符串建议用INLINE算法
+            shardingColumn: username
             shardingAlgorithmName: user_table_hash_mod
-    # 分片算法配置
     shardingAlgorithms:
       user_table_hash_mod:
         type: HASH_MOD
         props:
           sharding-count: 5
 
-# 属性配置（和dataSources同级）
+  # 2. 加密规则（独立区块，必须用 !ENCRYPT）
+  - !ENCRYPT
+    encryptors:
+      aes_encryptor:
+        type: AES
+        props:
+          aes-key-value: dfar3qiejfqhfif9
+
+    tables:
+      t_user:
+        columns:
+          phone: #逻辑字段（与dao对齐，代码中用的）
+            cipherColumn: phone #物理字段，与数据库中的密文字段对应，还有一个plainColumn，是数据库存储的明文字段
+            encryptorName: aes_encryptor
+          mail:
+            cipherColumn: mail
+            encryptorName: aes_encryptor
+          password:
+            cipherColumn: password
+            encryptorName: aes_encryptor
+        # 是映射到数据库明文字段还是密文字段
+        queryWithCipherColumn: true
+
+# 公共属性
 props:
   sql-show: true
