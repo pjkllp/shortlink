@@ -4,9 +4,11 @@ import com.nageoffer.shortlink.admin.common.convention.errorcode.IErrorCode;
 
 public enum UserErrorCode implements IErrorCode {
 
-    USER_NULL("B000200","用户记录不存在"),
-    USER_EXIST("B000201","用户记录已存在"),
-    USER_DATAEORRO("B000301","用户数据异常");
+    USER_NULL("B000200","用户名不存在"),
+    USER_EXIST("B000201","用户名已经存在"),
+    USER_RECORD_EXIST("B000203","用户记录已存在"),
+    USER_DATAEORRO("B000301","用户数据异常"),
+    USER_SAVE_ERROR("B000202","用户记录新增失败")
     ;
 
     private final String code;
