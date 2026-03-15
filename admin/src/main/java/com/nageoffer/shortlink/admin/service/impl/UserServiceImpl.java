@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nageoffer.shortlink.admin.common.constant.OtherConstant;
+import com.nageoffer.shortlink.admin.common.constant.Contant;
 import com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant;
 import com.nageoffer.shortlink.admin.common.enums.UserErrorCode;
 import com.nageoffer.shortlink.admin.common.exceptions.ClientException;
@@ -87,7 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new ClientException(UserErrorCode.USER_PASSWORD_ERROR);
         }
         String token = JwtUtil.generateJwt(userDO.getUsername());
-        stringRedisTemplate.opsForValue().set(OtherConstant.USER_LOGIN+userDO.getUsername(),token,30, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(Contant.USER_LOGIN+userDO.getUsername(),token,30, TimeUnit.MINUTES);
         return BeanUtil.toBean(userDO,UserLoginRespDTO.class).setToken(token);
     }
 
@@ -103,10 +103,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     public void logout(UserLogoutReqDTO requestParam) {
         String username = requestParam.getUsername();
         String token = requestParam.getToken();
-        String redisToken = stringRedisTemplate.opsForValue().get(OtherConstant.USER_LOGIN + username);
+        String redisToken = stringRedisTemplate.opsForValue().get(Contant.USER_LOGIN + username);
         if(redisToken==null||redisToken.isEmpty()||!redisToken.equals(token)){
             throw new ClientException(UserErrorCode.USER_DATA_ERROR);
         }
-        stringRedisTemplate.delete(OtherConstant.USER_LOGIN+username);
+        stringRedisTemplate.delete(Contant.USER_LOGIN+username);
     }
 }

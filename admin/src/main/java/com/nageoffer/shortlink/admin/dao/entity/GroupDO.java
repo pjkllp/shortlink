@@ -1,8 +1,9 @@
 package com.nageoffer.shortlink.admin.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.nageoffer.shortlink.admin.common.database.BaseDO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,7 +20,7 @@ import java.util.Date;
 @TableName("t_group")
 @AllArgsConstructor
 @NoArgsConstructor
-public class GroupDO extends BaseDO {
+public class GroupDO{
     /**
      * ID
      */
@@ -44,5 +45,22 @@ public class GroupDO extends BaseDO {
     /**
      * 分组排序参数
      */
-    private int sort_order;
+    private int sortOrder;
+    /**
+     * 创建时间
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Date createTime;
+
+    /**
+     * 更新时间
+     */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Date updateTime;
+
+    /**
+     * 删除标识
+     */
+    @TableField(fill = FieldFill.INSERT)
+    private Integer delFlag;
 }
