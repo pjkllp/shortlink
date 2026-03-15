@@ -1,39 +1,39 @@
-## 数据源配置
-#dataSources:
-#  ds_0:
-#    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
-#    driverClassName: com.mysql.cj.jdbc.Driver
-#    jdbcUrl: jdbc:mysql://192.168.100.152:3306/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
-#    username: root
-#    password: Root@123456
-#    maximumPoolSize: 10
-#    minimumIdle: 5
-#    connectionTimeout: 30000
-#
-## 规则配置（重点：与dataSources同级）
-#rules:
-#  # 1. 分片规则（独立区块，必须用 !SHARDING）
-#  - !SHARDING
-#    tables:
-#      t_user:
-#        actualDataNodes: ds_0.t_user_${0..4}
-#        tableStrategy:
-#          standard:
-#            shardingColumn: username
-#            shardingAlgorithmName: user_table_hash_mod
-#    shardingAlgorithms:
-#      user_table_hash_mod:
-#        type: HASH_MOD
-#        props:
-#          sharding-count: 5
-#
-#  # 2. 加密规则（独立区块，必须用 !ENCRYPT）
-#  - !ENCRYPT
-#    encryptors:
-#      aes_encryptor:
-#        type: AES
-#        props:
-#          aes-key-value: dfar3qiejfqhfif9
+# 数据源配置
+dataSources:
+  ds_0:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://192.168.100.152:3306/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: Root@123456
+    maximumPoolSize: 10
+    minimumIdle: 5
+    connectionTimeout: 30000
+
+# 规则配置（重点：与dataSources同级）
+rules:
+  # 1. 分片规则（独立区块，必须用 !SHARDING）
+  - !SHARDING
+    tables:
+      t_link:
+        actualDataNodes: ds_0.t_link_${0..4}
+        tableStrategy:
+          standard:
+            shardingColumn: gid
+            shardingAlgorithmName: link_table_hash_mod
+    shardingAlgorithms:
+      link_table_hash_mod:
+        type: HASH_MOD
+        props:
+          sharding-count: 5
+
+  # 2. 加密规则（独立区块，必须用 !ENCRYPT）
+  - !ENCRYPT
+    encryptors:
+      aes_encryptor:
+        type: AES
+        props:
+          aes-key-value: dfar3qiejfqhfif9
 #
 #    tables:
 #      t_user:
@@ -49,7 +49,7 @@
 #            encryptorName: aes_encryptor
 #        # 是映射到数据库明文字段还是密文字段
 #        queryWithCipherColumn: true
-#
-## 公共属性
-#props:
-#  sql-show: true
+
+# 公共属性
+props:
+  sql-show: true

@@ -24,16 +24,16 @@ public class InterceptorConfig implements WebMvcConfigurer {
                 // 修复点2：增加精确匹配+通配符匹配，覆盖所有场景
                 .excludePathPatterns(
                         // 精确匹配login接口（重点：去掉末尾/，和实际请求路径一致）
-                        "/api/short-link/v1/login",
+                        "/api/short-link/admin/v1/login",
                         // 兼容可能的末尾/场景
-                        "/api/short-link/v1/login/",
+                        "/api/short-link/admin/v1/login/",
                         // 检查用户名接口（去掉末尾/，避免匹配不一致）
-                        "/api/short-link/v1/has_username",
+                        "/api/short-link/admin/v1/has_username",
                         // 用户相关接口（用*匹配路径变量，而非{username}）
-                        "/api/short-link/v1/user/*",
+                        "/api/short-link/admin/v1/user/*",
                         // 注册用户接口
-                        "/api/short-link/v1/user",
-                        "/api/short-link/v1/logout"
+                        "/api/short-link/admin/v1/user",
+                        "/api/short-link/admin/v1/logout"
                 );
     }
 }

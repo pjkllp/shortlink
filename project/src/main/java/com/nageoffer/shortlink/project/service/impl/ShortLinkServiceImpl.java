@@ -33,7 +33,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         ShortLinkDO shortLinkDO = BeanUtil.toBean(requestParam, ShortLinkDO.class);
         shortLinkDO.setFullShortUrl(fullShortUrl)
                         .setShortUri(shortLinkSuffix)
-                                .setEnableStatus(0);
+                        .setEnableStatus(0);
         try{
             baseMapper.insert(shortLinkDO);
         }catch (DuplicateKeyException e){
