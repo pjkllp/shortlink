@@ -29,7 +29,7 @@ public class JwtUtil {
      */
     public static String generateJwt(String id) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("id", id);
+        claims.put("username", id);
 
         // 过期时间 = 当前时间 + 有效期
         Date expirationDate = new Date(System.currentTimeMillis() + EXPIRATION_TIME);
