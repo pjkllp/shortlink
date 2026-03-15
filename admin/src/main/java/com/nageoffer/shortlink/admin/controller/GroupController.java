@@ -24,7 +24,7 @@ public class GroupController {
      * @param requestParam 短链接分组请求参数
      * @return 分组成功
      */
-    @PostMapping("/api/short-link/v1/group")
+    @PostMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> save(@RequestBody ShortLinkGroupSaveReqDTO requestParam){
         groupService.saveGroup(requestParam.getName());
         return ResponseEntity.ok(Result.success("新建分组成功"));
@@ -34,7 +34,7 @@ public class GroupController {
      * 查询短链接分组集合
      * @return 某个用户的所有短链接分组
      */
-    @GetMapping("/api/short-link/v1/group")
+    @GetMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<List<ShortLinkGroupRespDTO>>> listGroup(){
         return ResponseEntity.ok(Result.success("查询成功",groupService.listGroup()));
     }
@@ -44,7 +44,7 @@ public class GroupController {
      * @param requestParam
      * @return
      */
-    @PutMapping("/api/short-link/v1/group")
+    @PutMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> update(@RequestBody ShortLinkGroupUpdateReq requestParam){
         groupService.updateGroup(requestParam);
         return ResponseEntity.ok(Result.success("修改成功"));
@@ -55,7 +55,7 @@ public class GroupController {
      * @param requestParam
      * @return
      */
-    @DeleteMapping("/api/short-link/v1/group")
+    @DeleteMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> delete(@RequestBody ShortLinkGroupDeleteReq requestParam){
         groupService.deleteGroup(requestParam.getGid());
         return ResponseEntity.ok(Result.success("删除成功"));
@@ -66,7 +66,7 @@ public class GroupController {
      * @param requestParam
      * @return
      */
-    @PostMapping("/api/short-link/v1/group/sort")
+    @PostMapping("/api/short-link/admin/v1/group/sort")
     public ResponseEntity<Result<Void>> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> requestParam){
         groupService.sortGroup(requestParam);
         return ResponseEntity.ok(Result.success("排序成功"));
