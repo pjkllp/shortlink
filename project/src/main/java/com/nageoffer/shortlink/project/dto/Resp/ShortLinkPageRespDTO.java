@@ -1,29 +1,17 @@
-package com.nageoffer.shortlink.project.dao.entity;
+package com.nageoffer.shortlink.project.dto.Resp;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableLogic;
 import lombok.Data;
-import lombok.experimental.Accessors;
 
 import java.util.Date;
 
 /**
- * 短链接实体类
- * 对应数据表：t_link
- *
- * @author 你的名字
- * @date 2026/03/15
+ * 短链接分页返回参数
  */
 @Data
-@TableName("t_link")
-@Accessors(chain = true)
-public class ShortLinkDO {
-
-    /**
-     * ID
-     */
-    @TableId(type = IdType.AUTO)
-    private Long id;
-
+public class ShortLinkPageRespDTO {
     /**
      * 域名
      */
@@ -43,21 +31,6 @@ public class ShortLinkDO {
      * 原始链接
      */
     private String originUrl;
-
-    /**
-     * 点击量
-     */
-    private Integer clickNum;
-
-    /**
-     * 启用标识,0：启用，1：未启用
-     */
-    private Integer enableStatus;
-
-    /**
-     * 创建类型，0：接口创建，1：控制台创建
-     */
-    private Integer createdType;
 
     /**
      * 有效期类型，0：永久有效，1：自定义
