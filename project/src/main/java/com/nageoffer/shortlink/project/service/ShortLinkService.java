@@ -2,11 +2,16 @@ package com.nageoffer.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
+import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
+
+import java.util.List;
+import java.util.Map;
 
 public interface ShortLinkService extends IService<ShortLinkDO>{
 
@@ -23,4 +28,11 @@ public interface ShortLinkService extends IService<ShortLinkDO>{
      * @return 分页返回
      */
     IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqTO requestParam);
+
+    /**
+     * 查询短链接各分组的短链接数量
+     * @param gids
+     * @return
+     */
+    List<ShortLinkGroupCountQueryReqDTO> listGroupShortLinkCount(List<String> gids);
 }

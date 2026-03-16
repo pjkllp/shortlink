@@ -5,14 +5,15 @@ import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
+import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -37,5 +38,13 @@ public class ShortLinkController {
     @PostMapping("/api/short-link/project/v1/page")
     public ResponseEntity<Result<IPage<ShortLinkPageRespDTO>>> pageShortLink(@RequestBody ShortLinkPageReqTO requestParam){
         return ResponseEntity.ok(Result.success(shortLinkService.pageShortLink(requestParam)));
+    }
+
+    /**
+     * 查询分组下的短链接数
+     */
+    @GetMapping("/api/short-link/project/v1/count")
+    public Result<List<ShortLinkGroupCountQueryReqDTO>> groupShortLinkCount(@RequestParam List<String> requestParam){
+        return Result.success("查询成功",shortLinkService.listGroupShortLinkCount(requestParam));
     }
 }
