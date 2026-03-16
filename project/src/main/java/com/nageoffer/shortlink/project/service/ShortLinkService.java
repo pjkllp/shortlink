@@ -2,16 +2,15 @@ package com.nageoffer.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
+import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
-import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryReqDTO;
+import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 
 import java.util.List;
-import java.util.Map;
 
 public interface ShortLinkService extends IService<ShortLinkDO>{
 
@@ -34,5 +33,11 @@ public interface ShortLinkService extends IService<ShortLinkDO>{
      * @param gids
      * @return
      */
-    List<ShortLinkGroupCountQueryReqDTO> listGroupShortLinkCount(List<String> gids);
+    List<ShortLinkGroupCountQueryRespDTO> listGroupShortLinkCount(List<String> gids);
+
+    /**
+     * 修改短链接
+     * @param requestParam 短链接修改参数
+     */
+    void updateShortLink(ShortLinkUpdateReqDTO requestParam);
 }

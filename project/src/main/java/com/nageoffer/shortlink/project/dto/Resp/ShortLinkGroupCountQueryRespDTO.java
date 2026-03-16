@@ -6,7 +6,7 @@ import lombok.Data;
  * 短链接分组查询返回
  */
 @Data
-public class ShortLinkGroupCountQueryReqDTO {
+public class ShortLinkGroupCountQueryRespDTO {
     /**
      * 分组标识
      */

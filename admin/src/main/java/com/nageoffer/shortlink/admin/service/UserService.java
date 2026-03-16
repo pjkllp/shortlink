@@ -20,6 +20,11 @@ public interface UserService extends IService<UserDO> {
      */
     UserRespDTO getUserByUsername(String username) throws ClientException;
 
+    /**
+     * 布隆过滤器判断用户名是否存在
+     * @param username 用户名
+     * @return 是否存在
+     */
     Boolean hasUsername(String username);
 
     /**
@@ -34,7 +39,16 @@ public interface UserService extends IService<UserDO> {
      */
     void update(UserUpdateReqDTO requestParam);
 
+    /**
+     * 用户登录
+     * @param userLoginReqDTO 用户登录请求参数
+     * @return 用户登录响应参数
+     */
     UserLoginRespDTO login(UserLoginReqDTO userLoginReqDTO);
 
+    /**
+     * 用户退出登录
+     * @param requestParam 用户退出登录请求参数
+     */
     void logout(UserLogoutReqDTO requestParam);
 }

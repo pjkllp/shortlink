@@ -4,8 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
+import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
-import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryReqDTO;
+import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RequiredArgsConstructor
 @RestController
@@ -26,8 +26,8 @@ public class ShortLinkController {
      * @return
      */
     @PostMapping("/api/short-link/project/v1/link")
-    public ResponseEntity<Result<ShortLinkCreateRespDTO>> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam){
-        return ResponseEntity.ok(Result.success("创建短链接成功",shortLinkService.createShortLink(requestParam)));
+    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam){
+        return Result.success("创建短链接成功",shortLinkService.createShortLink(requestParam));
     }
 
     /**
@@ -44,7 +44,13 @@ public class ShortLinkController {
      * 查询分组下的短链接数
      */
     @GetMapping("/api/short-link/project/v1/count")
-    public Result<List<ShortLinkGroupCountQueryReqDTO>> groupShortLinkCount(@RequestParam List<String> requestParam){
+    public Result<List<ShortLinkGroupCountQueryRespDTO>> groupShortLinkCount(@RequestParam List<String> requestParam){
         return Result.success("查询成功",shortLinkService.listGroupShortLinkCount(requestParam));
+    }
+
+    @PutMapping("/api/short-link/project/v1/link")
+    public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO requestParam){
+        shortLinkService.updateShortLink(requestParam);
+        return Result.success("修改成功");
     }
 }

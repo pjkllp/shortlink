@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.project.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.*;
+import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.Accessors;
 
@@ -16,6 +17,7 @@ import java.util.Date;
 @Data
 @TableName("t_link")
 @Accessors(chain = true)
+@Builder
 public class ShortLinkDO {
 
     /**

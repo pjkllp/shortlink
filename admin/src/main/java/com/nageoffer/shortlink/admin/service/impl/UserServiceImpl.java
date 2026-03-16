@@ -17,6 +17,7 @@ import com.nageoffer.shortlink.admin.dto.req.UserRegisterReqDTO;
 import com.nageoffer.shortlink.admin.dto.req.UserUpdateReqDTO;
 import com.nageoffer.shortlink.admin.dto.resp.UserLoginRespDTO;
 import com.nageoffer.shortlink.admin.dto.resp.UserRespDTO;
+import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.service.UserService;
 import com.nageoffer.shortlink.admin.toolkit.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     private final RBloomFilter userRegisterCachePenetrationBloomFilter;
     private final RedissonClient redissonClient;
     private final StringRedisTemplate stringRedisTemplate;
+    private final GroupService groupService;
 
     @Override
     public Boolean hasUsername(String username) {
@@ -45,7 +47,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if(hasUsername(requestParam.getUsername())){
             throw new ClientException(UserErrorCode.USER_EXIST);
         }
-        RLock lock = redissonClient.getLock(RedisCacheConstant.LOCK_USER_REGISTER_KEY);
+        RLock lock = redissonClient.getLock(RedisCacheConstant.LOCK_USER_REGISTER_KEY+requestParam.getUsername());
         boolean isLock = lock.tryLock();
         try {
             if (isLock){
@@ -54,6 +56,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                     throw new ClientException(UserErrorCode.USER_SAVE_ERROR);
                 }
                 userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
+                groupService.saveGroup(requestParam.getUsername(),"默认分组");
             }else {
                 throw new ClientException(UserErrorCode.USER_EXIST);
             }
