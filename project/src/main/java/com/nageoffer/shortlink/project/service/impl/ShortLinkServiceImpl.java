@@ -42,8 +42,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.GOTO_SHORT_LINK_KEY;
-import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.LOCK_GOTO_SHORT_LINK;
+import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
 
 /**
  * 短链接接口实现层
@@ -184,9 +183,28 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             response.sendRedirect(originalUrl);
             return;
         }
+        //布隆过滤器可能误判，导致请求一直打到数据库，需要再加一层缓存空值
+        boolean contains = shortLinkCreateCachePenetrationBloomFilter.contains(shortUri);
+        if(!contains){
+            return;
+        }
+        String gotoShortLinkIsnull = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_IS_NULL, fullShortUrl));
+        if(StrUtil.isNotBlank(gotoShortLinkIsnull)){
+            return;
+        }
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK, fullShortUrl));
-        lock.lock();
+        boolean locked = false;
         try {
+            locked = lock.tryLock(3,10, TimeUnit.SECONDS);
+            //没有获取到锁就进入兜底
+            if(!locked){
+                originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
+                if (StrUtil.isNotBlank(originalUrl)){
+                    response.sendRedirect(originalUrl);
+                    return;
+                }
+            }
+            //获取到锁了之后也可能是前一个获取到锁的线程在三秒内查询数据库添加缓存，释放了锁让我们抢到了
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)){
                 response.sendRedirect(originalUrl);
@@ -196,19 +214,23 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(wrapper);
             if(shortLinkGotoDO==null){
-                //这里按道理要做风控
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
                 return;
             }
             LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                     .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
-                    .eq(ShortLinkDO::getGid, shortLinkGotoDO.getGid());
+                    .eq(ShortLinkDO::getGid, shortLinkGotoDO.getGid())
+                    .eq(ShortLinkDO::getEnableStatus,0)
+                    .eq(ShortLinkDO::getDelFlag,0);
             ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
             if(shortLinkDO!=null){
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY,fullShortUrl),shortLinkDO.getOriginUrl());
                 response.sendRedirect(shortLinkDO.getOriginUrl());
             }
         }finally {
-            lock.unlock();
+            if(locked&&lock.isHeldByCurrentThread()){
+                lock.unlock();
+            }
         }
     }
 
