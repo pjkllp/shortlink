@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.constant.RedisKeyConstant;
+import com.nageoffer.shortlink.project.common.constant.ShortLinkConstant;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
@@ -24,6 +25,7 @@ import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
 import com.nageoffer.shortlink.project.toolkit.HashUtil;
+import com.nageoffer.shortlink.project.toolkit.ShortLinkUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +45,7 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
+import static com.nageoffer.shortlink.project.common.constant.ShortLinkConstant.SHORT_LINK_VALID_TIME;
 
 /**
  * 短链接接口实现层
@@ -97,6 +100,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             throw new ClientException("创建失败");
         }
         shortLinkCreateCachePenetrationBloomFilter.add(shortLinkSuffix);
+        stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY,fullShortUrl),shortLinkDO.getOriginUrl(), ShortLinkUtil.getValidDate(shortLinkDO.getValidData()),TimeUnit.MILLISECONDS);
         return ShortLinkCreateRespDTO.builder()
                 .gid(requestParam.getGid())
                 .fullShortUrl(shortLinkDO.getFullShortUrl())
