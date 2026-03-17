@@ -40,6 +40,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -100,7 +101,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             throw new ClientException("创建失败");
         }
         shortLinkCreateCachePenetrationBloomFilter.add(shortLinkSuffix);
-        stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY,fullShortUrl),shortLinkDO.getOriginUrl(), ShortLinkUtil.getValidDate(shortLinkDO.getValidData()),TimeUnit.MILLISECONDS);
+        stringRedisTemplate.opsForValue()
+                .set(String.format(GOTO_SHORT_LINK_KEY
+                        ,fullShortUrl)
+                        ,shortLinkDO.getOriginUrl()
+                        ,ShortLinkUtil.getValidDate(shortLinkDO.getValidData())
+                        ,TimeUnit.MILLISECONDS);
         return ShortLinkCreateRespDTO.builder()
                 .gid(requestParam.getGid())
                 .fullShortUrl(shortLinkDO.getFullShortUrl())
@@ -228,10 +234,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getEnableStatus,0)
                     .eq(ShortLinkDO::getDelFlag,0);
             ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
-            if(shortLinkDO!=null){
-                stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY,fullShortUrl),shortLinkDO.getOriginUrl());
-                response.sendRedirect(shortLinkDO.getOriginUrl());
+            if (shortLinkDO == null || (shortLinkDO.getValidData() != null && shortLinkDO.getValidData().before(new Date()))) {
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
+                return;
             }
+            stringRedisTemplate.opsForValue()
+                    .set(String.format(GOTO_SHORT_LINK_KEY,fullShortUrl)
+                                ,shortLinkDO.getOriginUrl()
+                                ,ShortLinkUtil.getValidDate(shortLinkDO.getValidData())
+                                ,TimeUnit.MILLISECONDS);
+                response.sendRedirect(shortLinkDO.getOriginUrl());
         }finally {
             if(locked&&lock.isHeldByCurrentThread()){
                 lock.unlock();
