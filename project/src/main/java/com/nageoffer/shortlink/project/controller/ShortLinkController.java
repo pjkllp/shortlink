@@ -9,10 +9,13 @@ import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -52,5 +55,11 @@ public class ShortLinkController {
     public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO requestParam){
         shortLinkService.updateShortLink(requestParam);
         return Result.success("修改成功");
+    }
+
+    @GetMapping("/{short-uri}")
+    public Result<Void> restoreUrl(@PathVariable("short-uri")String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
+        shortLinkService.restoreUrl(shortUri,request,response);
+        return Result.success();
     }
 }

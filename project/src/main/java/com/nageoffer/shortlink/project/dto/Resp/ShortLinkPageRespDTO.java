@@ -31,7 +31,7 @@ public class ShortLinkPageRespDTO {
     /**
      * 原始链接
      */
-    private String originUrl;
+    private String originUri;
 
     /**
      * 有效期类型，0：永久有效，1：自定义
