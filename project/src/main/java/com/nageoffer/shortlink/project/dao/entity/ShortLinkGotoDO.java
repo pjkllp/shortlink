@@ -1,5 +1,7 @@
 package com.nageoffer.shortlink.project.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +19,8 @@ public class ShortLinkGotoDO {
      * ID
      */
 
-    private long id;
+    @TableId(value = "id",type = IdType.ASSIGN_ID)
+    private Long id;
     /**
      * 分组标识
      */

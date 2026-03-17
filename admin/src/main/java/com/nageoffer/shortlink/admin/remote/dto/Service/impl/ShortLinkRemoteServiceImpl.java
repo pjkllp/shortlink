@@ -39,6 +39,16 @@ public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
         return bean;
     }
 
+    @Override
+    public Result<String> getTitle(String url) {
+        Map<String,Object> requestMap=new HashMap<>();
+        requestMap.put("url",url);
+        String get = HttpUtil.get("http://localhost:8001/api/short-link/title", requestMap);
+        return JSON.parseObject(get, new TypeReference<Result<String>>() {
+        });
+
+    }
+
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam){
         Map<String, Object> map = BeanUtil.beanToMap(requestParam);
         String post = HttpUtil.post(STR + "/link", JSON.toJSONString(map));
@@ -52,4 +62,6 @@ public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
         Result<List<ShortLinkGroupCountQueryRespDTO>> bean = JSON.parseObject(result,new TypeReference<Result<List<ShortLinkGroupCountQueryRespDTO>>>(){});
         return bean.getData();
     }
+
+
 }

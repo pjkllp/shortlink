@@ -8,8 +8,6 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.nageoffer.shortlink.project.common.constant.RedisKeyConstant;
-import com.nageoffer.shortlink.project.common.constant.ShortLinkConstant;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
@@ -30,6 +28,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -40,13 +42,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
-import static com.nageoffer.shortlink.project.common.constant.ShortLinkConstant.SHORT_LINK_VALID_TIME;
 
 /**
  * 短链接接口实现层
@@ -73,7 +77,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) {
+    public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) throws IOException {
         String shortLinkSuffix = generateSuffix(requestParam);
         String fullShortUrl = StrBuilder.create(shortLinkProtocol)
                 .append("://")
@@ -83,7 +87,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         ShortLinkDO shortLinkDO = BeanUtil.toBean(requestParam, ShortLinkDO.class);
         shortLinkDO.setFullShortUrl(fullShortUrl)
                         .setShortUri(shortLinkSuffix)
-                        .setEnableStatus(0);
+                        .setEnableStatus(0).setFavicon(getFavicon(requestParam.getOriginUrl()));
         try{
             baseMapper.insert(shortLinkDO);
         }catch (DuplicateKeyException e){
@@ -196,10 +200,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         //布隆过滤器可能误判，导致请求一直打到数据库，需要再加一层缓存空值
         boolean contains = shortLinkCreateCachePenetrationBloomFilter.contains(shortUri);
         if(!contains){
+            response.sendRedirect("/page/notfound");
             return;
         }
         String gotoShortLinkIsnull = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_IS_NULL, fullShortUrl));
         if(StrUtil.isNotBlank(gotoShortLinkIsnull)){
+            response.sendRedirect("/page/notfound");
             return;
         }
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK, fullShortUrl));
@@ -225,6 +231,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(wrapper);
             if(shortLinkGotoDO==null){
+                response.sendRedirect("/page/notfound");
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
                 return;
             }
@@ -235,6 +242,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getDelFlag,0);
             ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
             if (shortLinkDO == null || (shortLinkDO.getValidData() != null && shortLinkDO.getValidData().before(new Date()))) {
+                response.sendRedirect("/page/notfound");
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
                 return;
             }
@@ -269,5 +277,76 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             throw new ServiceException("短链接频繁生成，请稍后再试");
         }
         return uri;
+    }
+    // 模拟浏览器的请求头（关键：解决 405/反爬）
+    private static final Map<String, String> BROWSER_HEADERS = Map.of(
+            "User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+            "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+            "Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8",
+            "Accept-Encoding", "gzip, deflate, br",
+            "Connection", "keep-alive",
+            "Upgrade-Insecure-Requests", "1"
+    );
+
+    private String getFavicon(String url) throws IOException {
+        // 1. 补全协议头
+        if (url == null || url.trim().isEmpty()) {
+            return "URL 不能为空";
+        }
+        String targetUrl = url.trim();
+        if (!targetUrl.startsWith("http")) {
+            targetUrl = "https://" + targetUrl;
+        }
+
+        try {
+            URL urlObj = new URL(targetUrl);
+            // 2. 先尝试直接获取 /favicon.ico（跳过 HTML 解析，避免 405）
+            String defaultFavicon = urlObj.getProtocol() + "://" + urlObj.getHost() + "/favicon.ico";
+            if (isUrlAccessible(defaultFavicon)) {
+                return defaultFavicon;
+            }
+
+            // 3. 尝试解析 HTML（兼容 405 状态码，强制解析）
+            Document document = Jsoup.connect(targetUrl)
+                    .headers(BROWSER_HEADERS) // 加浏览器请求头
+                    .timeout(5000)
+                    .ignoreHttpErrors(true) // 忽略 405/403 等错误，继续解析
+                    .ignoreContentType(true)
+                    .get();
+
+            Elements faviconLinks = document.select("link[rel~=(?i)^(icon|shortcut icon|apple-touch-icon)$]");
+            if (!faviconLinks.isEmpty()) {
+                String faviconUrl = faviconLinks.first().attr("abs:href");
+                return faviconUrl;
+            } else {
+                return defaultFavicon;
+            }
+
+        } catch (Exception e) {
+            return "获取图标失败：" + e.getMessage();
+        }
+    }
+
+    // 校验 URL 是否可访问（兼容 GET/HEAD 方法）
+    private boolean isUrlAccessible(String checkUrl) {
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(checkUrl).openConnection();
+            // 加浏览器请求头
+            BROWSER_HEADERS.forEach(conn::setRequestProperty);
+            // 先试 HEAD 方法（更轻量），失败试 GET
+            try {
+                conn.setRequestMethod("HEAD");
+            } catch (Exception e) {
+                conn.setRequestMethod("GET");
+            }
+            conn.setConnectTimeout(3000);
+            conn.setReadTimeout(3000);
+            conn.setInstanceFollowRedirects(true); // 跟随重定向
+            int code = conn.getResponseCode();
+            // 2xx 成功，3xx 重定向都算可访问
+            return code >= 200 && code < 400;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

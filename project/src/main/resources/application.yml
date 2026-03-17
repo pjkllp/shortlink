@@ -20,6 +20,10 @@ spring:
       port: 6379
       password: 123456
       database: 0
+  mvc:
+    view:
+      prefix: /templates/
+      suffix: .html
 short-link:
   protocol: http
   domain:

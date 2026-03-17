@@ -34,4 +34,11 @@ public interface ShortLinkRemoteService{
      * @return 短链接分页查询参数
      */
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(@RequestBody ShortLinkPageReqDTO requestParam);
+
+    /**
+     * 根据url查询网址标题
+     * @param url 网址
+     * @return 网址标题
+     */
+    public Result<String> getTitle(String url);
 }

@@ -29,7 +29,7 @@ public class ShortLinkController {
      * @return
      */
     @PostMapping("/api/short-link/project/v1/link")
-    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam){
+    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam) throws IOException {
         return Result.success("创建短链接成功",shortLinkService.createShortLink(requestParam));
     }
 
@@ -62,4 +62,5 @@ public class ShortLinkController {
         shortLinkService.restoreUrl(shortUri,request,response);
         return Result.success();
     }
+
 }

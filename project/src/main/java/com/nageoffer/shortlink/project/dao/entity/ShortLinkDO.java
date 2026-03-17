@@ -23,7 +23,7 @@ public class ShortLinkDO {
     /**
      * ID
      */
-    @TableId(type = IdType.AUTO)
+    @TableId(value = "id",type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
