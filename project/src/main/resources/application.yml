@@ -28,3 +28,6 @@ short-link:
   protocol: http
   domain:
     default: nurl.ink
+gaode:
+  amap:
+    key: c2a69289fa819a2e36b6e467c82d692c

@@ -2,7 +2,9 @@ package com.nageoffer.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.lang.UUID;
 import cn.hutool.core.text.StrBuilder;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -12,10 +14,12 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
+import com.nageoffer.shortlink.project.dao.entity.LinkLocalStatsDO;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkAccessStatsDO;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkGotoDO;
-import com.nageoffer.shortlink.project.dao.mapper.ShortLinkAccessStatsDOMapper;
+import com.nageoffer.shortlink.project.dao.mapper.LinkLocalStatsMapper;
+import com.nageoffer.shortlink.project.dao.mapper.ShortLinkAccessStatsMapper;
 import com.nageoffer.shortlink.project.dao.mapper.ShortLinkGotoMapper;
 import com.nageoffer.shortlink.project.dao.mapper.ShortLinkMapper;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
@@ -24,16 +28,20 @@ import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
+import com.nageoffer.shortlink.project.service.LinkLocalStatsService;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
+import com.nageoffer.shortlink.project.toolkit.AmapIpUtil;
+import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
 import com.nageoffer.shortlink.project.toolkit.HashUtil;
+import com.nageoffer.shortlink.project.toolkit.IpUtil;
 import com.nageoffer.shortlink.project.toolkit.ShortLinkUtil;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
@@ -47,11 +55,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
 
@@ -73,7 +79,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final RedissonClient redissonClient;
 
-    private final ShortLinkAccessStatsDOMapper shortLinkAccessStatsDOMapper;
+    private final ShortLinkAccessStatsMapper shortLinkAccessStatsDOMapper;
+
+    private final LinkLocalStatsMapper linkLocalStatsMapper;
+
+    private final AmapIpUtil amapIpUtil;
 
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
@@ -277,10 +287,37 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
             gid=shortLinkGotoDO.getGid();
         }
+        Runnable runnable=()-> {
+            String uuid = UUID.randomUUID().toString();
+            Cookie cookie = new Cookie("short_uv", uuid);
+            cookie.setDomain(request.getServerName());
+            cookie.setPath(request.getRequestURL().substring(1));
+            cookie.setMaxAge(365 * 24 * 60 * 60);
+            stringRedisTemplate.opsForSet().add("short_link_uv_stats",
+                    fullShortUrl + uuid);
+            response.addCookie(cookie);
+        };
+        AtomicBoolean atomicBoolean=new AtomicBoolean(true);
+        Cookie[] cookies = request.getCookies();
+        if(ArrayUtil.isNotEmpty(cookies)){
+            Arrays.stream(cookies)
+                    .filter(each -> each.getName().equals("short_uv"))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .ifPresentOrElse(each->{
+                        Long added = stringRedisTemplate.opsForSet().add("short_link_uv_stats",
+                                fullShortUrl + each);
+                        atomicBoolean.set(added!=null&&added>1L);
+                    },runnable);
+        }else {
+            runnable.run();
+        }
+        String ip = IpUtil.getRealIp(request);
+        Long added = stringRedisTemplate.opsForSet().add("short_link_uip_stats", ip);
         ShortLinkAccessStatsDO shortLinkAccessStatsDO = ShortLinkAccessStatsDO.builder()
                 .pv(1)
-                .uv(1)
-                .uip(1)
+                .uv(atomicBoolean.get()?1:0)
+                .uip(added!=null&&added>0?1:0)
                 .gid(gid)
                 .date(new Date())
                 .hour(DateUtil.hour(new Date(), true))
@@ -288,6 +325,22 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .fullShortUrl(fullShortUrl)
                 .build();
         shortLinkAccessStatsDOMapper.shortLinkStats(shortLinkAccessStatsDO);
+        AmapIpLocationResult locationByIp = amapIpUtil.getLocationByIp(ip);
+        String city = locationByIp.getCity();
+        String province = locationByIp.getProvince();
+        String adcode = locationByIp.getAdcode();
+
+        LinkLocalStatsDO linkLocalStatsDO = LinkLocalStatsDO.builder()
+                .cnt(1)
+                .fullShortUrl(fullShortUrl)
+                .city(StrUtil.isBlank(city)||Objects.equals(city, "[]") ?"未知":city)
+                .province(StrUtil.isBlank(province)||Objects.equals(province, "[]") ?"未知":province)
+                .ascode(StrUtil.isBlank(adcode)||Objects.equals(adcode, "[]") ?"未知":adcode)
+                .gid(gid)
+                .country("未知")
+                .date(new Date())
+                .build();
+        linkLocalStatsMapper.shortLinkLocalStats(linkLocalStatsDO);
     }
 
     /**
