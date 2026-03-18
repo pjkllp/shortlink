@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
@@ -25,7 +26,7 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
 
     private final StringRedisTemplate stringRedisTemplate;
     @Override
-    public void recycleBinSave(RecycleBinSaveReqDTO requestParam) throws InterruptedException {
+    public void recycleBinSave(RecycleBinSaveReqDTO requestParam) {
         LambdaUpdateWrapper<ShortLinkDO> set = Wrappers.lambdaUpdate(ShortLinkDO.class)
                 .eq(ShortLinkDO::getGid, requestParam.getGid())
                 .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
@@ -34,20 +35,18 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
         ShortLinkDO build = ShortLinkDO.builder().enableStatus(1).build();
         stringRedisTemplate
                 .delete(String.format(GOTO_SHORT_LINK_KEY,requestParam.getFullShortUrl()));
-        int update = baseMapper.update(build, set);
-        if (update!=1){
-            throw new ServiceException("更新异常");
-        }
+        baseMapper.update(build, set);
     }
 
     @Override
     public IPage<RecycleBinPageRespDTO> recycleBinPage(RecycleBinPageReqDTO requestParam) {
-        LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, requestParam.getGid())
-                .eq(ShortLinkDO::getEnableStatus, 1)
-                .eq(ShortLinkDO::getDelFlag, 0);
-        RecycleBinPageReqDTO recycleBinPageReqDTO = baseMapper.selectPage(requestParam, queryWrapper);
-        return recycleBinPageReqDTO.convert(each-> BeanUtil.toBean(each,RecycleBinPageRespDTO.class));
-
+        IPage<ShortLinkDO> page = baseMapper.selectPage(
+                new Page<>(requestParam.getCurrent(), requestParam.getSize()),
+                Wrappers.lambdaQuery(ShortLinkDO.class)
+                        .in(ShortLinkDO::getGid, requestParam.getGidList())
+                        .eq(ShortLinkDO::getEnableStatus, 1)
+                        .eq(ShortLinkDO::getDelFlag, 0)
+        );
+        return page.convert(each->BeanUtil.toBean(each,RecycleBinPageRespDTO.class));
     }
 }

@@ -1,6 +1,6 @@
 package com.nageoffer.shortlink.admin.common.constant;
 
-public class Contant {
+public class Constant {
 
     public static final ThreadLocal<String> USER_MESSAGE=new ThreadLocal<>();
 

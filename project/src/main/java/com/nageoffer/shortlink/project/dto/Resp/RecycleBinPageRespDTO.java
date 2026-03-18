@@ -14,7 +14,7 @@ import java.util.Date;
  * 回收站分页查询返回参数
  */
 @Data
-public class RecycleBinPageRespDTO extends Page<ShortLinkDO> {
+public class RecycleBinPageRespDTO{
     /**
      * 域名
      */

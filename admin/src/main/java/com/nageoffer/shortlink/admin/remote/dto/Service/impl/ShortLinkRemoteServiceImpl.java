@@ -5,8 +5,13 @@ import cn.hutool.core.map.MapUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.nageoffer.shortlink.admin.common.constant.Constant;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
+import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
@@ -16,6 +21,7 @@ import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Service.ShortLinkRemoteService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,8 +34,10 @@ import java.util.Map;
  * 短链接中台远程调用服务
  */
 @Service
+@RequiredArgsConstructor
 public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
 
+    private final GroupMapper groupMapper;
 
     String STR="http://localhost:8001/api/short-link/project/v1";
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(@RequestBody ShortLinkPageReqDTO requestParam){
@@ -58,6 +66,12 @@ public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
 
     @Override
     public Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam) {
+        LambdaQueryWrapper<GroupDO> queryWrapper = Wrappers.lambdaQuery(GroupDO.class)
+                .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get())
+                .eq(GroupDO::getDelFlag, 0);
+        List<GroupDO> groupDOS = groupMapper.selectList(queryWrapper);
+        List<String> gidList = groupDOS.stream().map(GroupDO::getGid).toList();
+        requestParam.setGidList(gidList);
         Map<String, Object> map = BeanUtil.beanToMap(requestParam);
         String result = HttpUtil.post("http://localhost:8001/api/short-link/v1/recycle-bin/page", JSON.toJSONString(map));
         return JSON.parseObject(result, new TypeReference<Result<IPage<RecycleBinPageRespDTO>>>() {});

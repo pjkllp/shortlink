@@ -52,7 +52,7 @@ public interface ShortLinkRemoteService{
     Result<Void> recycleBinSave(RecycleBinSaveReqDTO requestParam);
 
     /**
-     * 回收站分页查询
+     * 回收站分页查询,根据当前用户username来查分组，再调用远程来根据gids查所有短链接
      * @param requestParam 回收站分页查询请求参数
      * @return 回收站分页查询响应参数
      */

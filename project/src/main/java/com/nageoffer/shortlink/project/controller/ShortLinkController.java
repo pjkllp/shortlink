@@ -38,8 +38,8 @@ public class ShortLinkController {
      * @param requestParam
      * @return
      */
-    @GetMapping("/api/short-link/project/v1/page")
-    public ResponseEntity<Result<IPage<ShortLinkPageRespDTO>>> pageShortLink(ShortLinkPageReqTO requestParam){
+    @PostMapping("/api/short-link/project/v1/page")
+    public ResponseEntity<Result<IPage<ShortLinkPageRespDTO>>> pageShortLink(@RequestBody ShortLinkPageReqTO requestParam){
         return ResponseEntity.ok(Result.success(shortLinkService.pageShortLink(requestParam)));
     }
 

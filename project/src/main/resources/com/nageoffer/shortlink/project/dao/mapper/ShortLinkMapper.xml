@@ -10,4 +10,13 @@
         and enable_status=0
         group by gid
     </select>
+    <select id="recycleBinPageReqDTO" resultType="com.nageoffer.shortlink.project.dto.Resp.RecycleBinPageRespDTO">
+        select from t_link where gid in
+        <foreach collection="list" item="gid" open="(" close=")" separator=",">
+              #{gid}
+        </foreach>
+        and enable_status=0
+        group
+    </select>
+
 </mapper>
