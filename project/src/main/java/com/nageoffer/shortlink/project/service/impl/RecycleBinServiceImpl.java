@@ -10,15 +10,19 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.constant.RedisKeyConstant;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
+import com.nageoffer.shortlink.project.dao.entity.ShortLinkGotoDO;
+import com.nageoffer.shortlink.project.dao.mapper.ShortLinkGotoMapper;
 import com.nageoffer.shortlink.project.dao.mapper.ShortLinkMapper;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinRecoverReqDTO;
+import com.nageoffer.shortlink.project.dto.Req.RecycleBinRemoveReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.project.service.RecycleBinService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.GOTO_SHORT_LINK_IS_NULL;
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.GOTO_SHORT_LINK_KEY;
@@ -28,6 +32,7 @@ import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.G
 public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements RecycleBinService {
 
     private final StringRedisTemplate stringRedisTemplate;
+    private final ShortLinkGotoMapper shortLinkGotoMapper;
     @Override
     public void recycleBinSave(RecycleBinSaveReqDTO requestParam) {
         LambdaUpdateWrapper<ShortLinkDO> set = Wrappers.lambdaUpdate(ShortLinkDO.class)
@@ -65,5 +70,24 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
         stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY
                 ,requestParam.getFullShortUrl()),requestParam.getOriginUrl());
         stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_IS_NULL,requestParam.getFullShortUrl()));
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void recycleBinRemove(RecycleBinRemoveReqDTO requestParam) {
+        LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
+                .eq(ShortLinkDO::getEnableStatus, 1)
+                .eq(ShortLinkDO::getDelFlag,0)
+                .eq(ShortLinkDO::getGid, requestParam.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl());
+        int delete = baseMapper.delete(updateWrapper);
+        LambdaUpdateWrapper<ShortLinkGotoDO> doLambdaUpdateWrapper = Wrappers.lambdaUpdate(ShortLinkGotoDO.class)
+                .eq(ShortLinkGotoDO::getFullShortUrl, requestParam.getFullShortUrl())
+                .eq(ShortLinkGotoDO::getGid, requestParam.getGid());
+        int delete1 = shortLinkGotoMapper.delete(doLambdaUpdateWrapper);
+        if(delete1!=1||delete!=1){
+            throw new ServiceException("删除失败");
+        }
+        stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY,requestParam.getFullShortUrl()));
     }
 }

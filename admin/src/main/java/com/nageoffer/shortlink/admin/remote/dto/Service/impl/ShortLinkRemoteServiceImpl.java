@@ -13,10 +13,7 @@ import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinRecoverReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.*;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
@@ -84,6 +81,13 @@ public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
     public Result<Void> recycleBinRecover(RecycleBinRecoverReqDTO requestParam) {
         Map<String, Object> map = BeanUtil.beanToMap(requestParam);
         String post = HttpUtil.post(suffix + "/api/short-link/v1/recycle-bin/recover", JSON.toJSONString(map));
+        return JSON.parseObject(post, new TypeReference<Result<Void>>() {});
+    }
+
+    @Override
+    public Result<Void> recycleBinRemove(RecycleBinRemoveReqDTO requestParam) {
+        Map<String, Object> map = BeanUtil.beanToMap(requestParam);
+        String post = HttpUtil.post(suffix + "/api/short-link/v1/recycle-bin/remove", JSON.toJSONString(map));
         return JSON.parseObject(post, new TypeReference<Result<Void>>() {});
     }
 

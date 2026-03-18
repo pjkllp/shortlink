@@ -5,6 +5,7 @@ import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinRecoverReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinRemoveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Service.ShortLinkRemoteService;
 import lombok.RequiredArgsConstructor;
@@ -33,5 +34,10 @@ public class RecycleBinController {
     @PostMapping("/api/short-link/admin/v1/recycle-bin/recover")
     public Result<Void> recycleBinRecover(@RequestBody RecycleBinRecoverReqDTO requestParam){
         return shortLinkRemoteService.recycleBinRecover(requestParam);
+    }
+
+    @PostMapping("/api/short-link/admin/v1/recycle-bin/remove")
+    public Result<Void> recycleBinRemove(@RequestBody RecycleBinRemoveReqDTO requestParam){
+        return shortLinkRemoteService.recycleBinRemove(requestParam);
     }
 }

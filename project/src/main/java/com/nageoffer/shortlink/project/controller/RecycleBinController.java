@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinRecoverReqDTO;
+import com.nageoffer.shortlink.project.dto.Req.RecycleBinRemoveReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.project.service.RecycleBinService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -45,5 +47,11 @@ public class RecycleBinController {
     public Result<Void> recover(@RequestBody RecycleBinRecoverReqDTO requestParam){
         recycleBinService.recycleBinRecover(requestParam);
         return Result.success("移除成功");
+    }
+
+    @PostMapping("/api/short-link/v1/recycle-bin/remove")
+    public Result<Void> remove(@RequestBody RecycleBinRemoveReqDTO requestParam){
+        recycleBinService.recycleBinRemove(requestParam);
+        return Result.success("删除成功");
     }
 }

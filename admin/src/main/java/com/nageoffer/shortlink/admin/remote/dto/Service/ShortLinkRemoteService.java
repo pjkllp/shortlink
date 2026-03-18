@@ -3,10 +3,7 @@ package com.nageoffer.shortlink.admin.remote.dto.Service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinRecoverReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.*;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
@@ -59,5 +56,17 @@ public interface ShortLinkRemoteService{
      */
     Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam);
 
+    /**
+     * 将短链接从回收站恢复
+     * @param requestParam 短链接回收站恢复参数
+     * @return 远程响应
+     */
     Result<Void> recycleBinRecover(RecycleBinRecoverReqDTO requestParam);
+
+    /**
+     * 将短链接从回收站永久删除
+     * @param requestParam 短链接删除参数
+     * @return 远程响应
+     */
+    Result<Void> recycleBinRemove(RecycleBinRemoveReqDTO requestParam);
 }
