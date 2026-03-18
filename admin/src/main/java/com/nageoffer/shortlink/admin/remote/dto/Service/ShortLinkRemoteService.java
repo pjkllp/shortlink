@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinRecoverReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
@@ -57,4 +58,6 @@ public interface ShortLinkRemoteService{
      * @return 回收站分页查询响应参数
      */
     Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam);
+
+    Result<Void> recycleBinRecover(RecycleBinRecoverReqDTO requestParam);
 }
