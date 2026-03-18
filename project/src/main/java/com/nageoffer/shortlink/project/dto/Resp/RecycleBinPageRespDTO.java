@@ -1,21 +1,20 @@
-package com.nageoffer.shortlink.admin.remote.dto.Resp;
+package com.nageoffer.shortlink.project.dto.Resp;
 
-import com.alibaba.fastjson2.annotation.JSONField;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.nageoffer.shortlink.admin.dao.entity.ShortLinkDO;
+import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import lombok.Data;
 
 import java.util.Date;
 
 /**
- * 短链接分页返回参数
+ * 回收站分页查询返回参数
  */
 @Data
-public class ShortLinkPageRespDTO extends Page<ShortLinkDO> {
+public class RecycleBinPageRespDTO extends Page<ShortLinkDO> {
     /**
      * 域名
      */
@@ -34,7 +33,7 @@ public class ShortLinkPageRespDTO extends Page<ShortLinkDO> {
     /**
      * 原始链接
      */
-    private String originUrl;
+    private String originUri;
 
     /**
      * 有效期类型，0：永久有效，1：自定义
@@ -56,7 +55,6 @@ public class ShortLinkPageRespDTO extends Page<ShortLinkDO> {
      */
     @TableField(fill = FieldFill.INSERT)
     @JsonFormat(pattern = "yyyy-MM-dd HH-mm-ss",timezone = "GMT+8")
-    @JSONField(format = "yyyy-MM-dd HH-mm-ss")
     private Date createTime;
 
     /**
@@ -64,7 +62,6 @@ public class ShortLinkPageRespDTO extends Page<ShortLinkDO> {
      */
     @JsonFormat(pattern = "yyyy-MM-dd HH-mm-ss",timezone = "GMT+8")
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    @JSONField(format = "yyyy-MM-dd HH-mm-ss")
     private Date updateTime;
 
     /**

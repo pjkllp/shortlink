@@ -2,8 +2,11 @@ package com.nageoffer.shortlink.admin.remote.dto.Service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
@@ -19,26 +22,39 @@ public interface ShortLinkRemoteService{
      * @param requestParam 分组的集合
      * @return 分组数据实参
      */
-    public List<ShortLinkGroupCountQueryRespDTO> count(@RequestParam List<String> requestParam);
+    List<ShortLinkGroupCountQueryRespDTO> count(@RequestParam List<String> requestParam);
 
     /**
      * 远程创建短链接
      * @param requestParam 远程创建短链接实参
      * @return
      */
-    public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam);
+    Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam);
 
     /**
      * 短链接分页查询
      * @param requestParam 短链接分页查询参数
      * @return 短链接分页查询参数
      */
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(@RequestBody ShortLinkPageReqDTO requestParam);
+    Result<IPage<ShortLinkPageRespDTO>> pageShortLink(@RequestBody ShortLinkPageReqDTO requestParam);
 
     /**
      * 根据url查询网址标题
      * @param url 网址
      * @return 网址标题
      */
-    public Result<String> getTitle(String url);
+    Result<String> getTitle(String url);
+
+    /**
+     * 回收站管理回收
+     * @param requestParam 回收请求实体
+     */
+    Result<Void> recycleBinSave(RecycleBinSaveReqDTO requestParam);
+
+    /**
+     * 回收站分页查询
+     * @param requestParam 回收站分页查询请求参数
+     * @return 回收站分页查询响应参数
+     */
+    Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam);
 }

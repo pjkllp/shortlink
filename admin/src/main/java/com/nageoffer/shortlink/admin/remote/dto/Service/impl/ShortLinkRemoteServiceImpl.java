@@ -3,13 +3,15 @@ package com.nageoffer.shortlink.admin.remote.dto.Service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.http.HttpUtil;
-import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.TypeReference;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
@@ -18,8 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -28,15 +30,13 @@ import java.util.Map;
 @Service
 public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
 
+
     String STR="http://localhost:8001/api/short-link/project/v1";
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(@RequestBody ShortLinkPageReqDTO requestParam){
-        Map<String,Object> requestMap=new HashMap<>();
-        requestMap.put("gid",requestParam.getGid());
-        requestMap.put("current",requestParam.getCurrent());
-        requestMap.put("size",requestParam.getSize());
+        Map<String, Object> requestMap = BeanUtil.beanToMap(requestParam);
         String post = HttpUtil.post(STR + "/page", JSON.toJSONString(requestMap));
-        Result<IPage<ShortLinkPageRespDTO>> bean = JSONUtil.toBean(post, Result.class);
-        return bean;
+        return JSON.parseObject(post, new TypeReference<Result<IPage<ShortLinkPageRespDTO>>>() {
+        });
     }
 
     @Override
@@ -49,13 +49,27 @@ public class ShortLinkRemoteServiceImpl implements ShortLinkRemoteService {
 
     }
 
+    @Override
+    public Result<Void> recycleBinSave(RecycleBinSaveReqDTO requestParam) {
+        Map<String, Object> map = BeanUtil.beanToMap(requestParam);
+        String post = HttpUtil.post("http://localhost:8001/api/short-link/v1/recycle-bin/save", JSON.toJSONString(map));
+        return JSON.parseObject(post,new TypeReference<>(){});
+    }
+
+    @Override
+    public Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam) {
+        Map<String, Object> map = BeanUtil.beanToMap(requestParam);
+        String result = HttpUtil.post("http://localhost:8001/api/short-link/v1/recycle-bin/page", JSON.toJSONString(map));
+        return JSON.parseObject(result, new TypeReference<Result<IPage<RecycleBinPageRespDTO>>>() {});
+    }
+
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam){
         Map<String, Object> map = BeanUtil.beanToMap(requestParam);
         String post = HttpUtil.post(STR + "/link", JSON.toJSONString(map));
-        Result<ShortLinkCreateRespDTO> bean = JSONUtil.toBean(post, Result.class);
-        return bean;
+        return JSON.parseObject(post,new TypeReference<Result<ShortLinkCreateRespDTO>>(){});
     }
 
+    @Override
     public List<ShortLinkGroupCountQueryRespDTO> count(@RequestParam List<String> requestParam){
         Map<String, Object> requestParam1 = MapUtil.of("requestParam", requestParam);
         String result = HttpUtil.get(STR + "/count", requestParam1);

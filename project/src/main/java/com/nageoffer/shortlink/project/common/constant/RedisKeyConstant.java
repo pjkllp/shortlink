@@ -18,4 +18,5 @@ public class RedisKeyConstant {
      * 缓存短链接空值防止恶意请求key
      */
     public final static String GOTO_SHORT_LINK_IS_NULL="short_link_goto_isnull_%s";
+
 }
