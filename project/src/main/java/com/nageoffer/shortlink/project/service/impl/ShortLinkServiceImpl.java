@@ -78,6 +78,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final LinkOsStatsMapper linkOsStatsMapper;
 
+    private final LinkBrowserStatsMapper linkBrowserStatsMapper;
+
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
     @Value("${short-link.protocol}")
@@ -344,6 +346,16 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .build();
         linkOsStatsMapper.shortLinkOsStats(linkOsStatsDO);
 
+        String browser = UserAgentParserUtil.getBrowserFromRequest(request);
+
+        LinkBrowserStatsDO linkBrowserStatsDO = LinkBrowserStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .browser(browser)
+                .cnt(1)
+                .gid(gid)
+                .date(new Date())
+                .build();
+        linkBrowserStatsMapper.shortLinkBrowserStats(linkBrowserStatsDO);
     }
 
     /**

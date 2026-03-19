@@ -55,14 +55,46 @@ public class UserAgentParserUtil {
         return osStr;
     }
 
-    // 若使用UserAgentUtils，简化版方法：
-    /*
-    public static String getOsFromRequest(HttpServletRequest request) {
+    // ========== 新增解析浏览器方法 ==========
+    /**
+     * 解析请求，获取浏览器名称+版本（如：Chrome 122、Safari 17、微信浏览器 8.0）
+     * @param request HTTP请求对象
+     * @return 浏览器信息
+     */
+    public static String getBrowserFromRequest(HttpServletRequest request) {
+        // 1. 获取User-Agent
         String userAgent = request.getHeader("User-Agent");
-        if (userAgent == null) return "未知系统";
-        UserAgent ua = UserAgent.parseUserAgentString(userAgent);
-        OperatingSystem os = ua.getOperatingSystem();
-        return os.getName(); // 直接返回系统名称，如Windows 10、Android
+        if (userAgent == null || userAgent.isEmpty()) {
+            return "未知浏览器";
+        }
+
+        // 2. 解析UA获取浏览器信息
+        Client client = PARSER.parse(userAgent);
+        String browserFamily = client.userAgent.family; // 浏览器大类（Chrome、Safari、Firefox等）
+        String browserMajor = client.userAgent.major;   // 主版本（122、17、115等）
+        String browserMinor = client.userAgent.minor;   // 次版本（可选）
+
+        // 3. 拼接浏览器名称+版本
+        StringBuilder browser = new StringBuilder(browserFamily);
+        if (browserMajor != null && !browserMajor.isEmpty()) {
+            browser.append(" ").append(browserMajor);
+            if (browserMinor != null && !browserMinor.isEmpty()) {
+                browser.append(".").append(browserMinor);
+            }
+        }
+
+        // 4. 兼容处理：识别微信/支付宝内置浏览器（关键补充）
+        String browserStr = browser.toString();
+        if (userAgent.contains("MicroMessenger")) {
+            // 提取微信版本（如 MicroMessenger/8.0.40 → 微信浏览器 8.0.40）
+            String wechatVersion = userAgent.split("MicroMessenger/")[1].split(" ")[0];
+            browserStr = "微信浏览器 " + wechatVersion;
+        } else if (userAgent.contains("AlipayClient")) {
+            browserStr = "支付宝内置浏览器";
+        } else if (userAgent.contains("QQBrowser")) {
+            browserStr = browserStr.replace("QQBrowser", "QQ浏览器");
+        }
+
+        return browserStr;
     }
-    */
 }
