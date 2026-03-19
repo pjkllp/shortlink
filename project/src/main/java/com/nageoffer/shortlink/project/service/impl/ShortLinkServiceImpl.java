@@ -22,7 +22,6 @@ import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
-import com.nageoffer.shortlink.project.service.LinkLocalStatsService;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
 import com.nageoffer.shortlink.project.toolkit.*;
 import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
@@ -49,6 +48,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
 
@@ -70,9 +70,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final RedissonClient redissonClient;
 
-    private final ShortLinkAccessStatsMapper shortLinkAccessStatsDOMapper;
+    private final LinkAccessStatsMapper shortLinkAccessStatsDOMapper;
 
-    private final LinkLocalStatsMapper linkLocalStatsMapper;
+    private final LinkLocaleStatsMapper linkLocalStatsMapper;
 
     private final AmapIpUtil amapIpUtil;
 
@@ -83,6 +83,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkDeviceStatsMapper linkDeviceStatsMapper;
 
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
+
+    private final LinkAccessLogsMapper linkAccessLogsMapper;
 
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
@@ -287,14 +289,15 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
             gid=shortLinkGotoDO.getGid();
         }
+        AtomicReference<String> uv=new AtomicReference<>();
         Runnable runnable=()-> {
-            String uuid = UUID.randomUUID().toString();
-            Cookie cookie = new Cookie("short_uv", uuid);
+            uv.set(UUID.randomUUID().toString());
+            Cookie cookie = new Cookie("short_uv",uv.get());
             cookie.setDomain(request.getServerName());
             cookie.setPath(request.getRequestURL().substring(1));
             cookie.setMaxAge(365 * 24 * 60 * 60);
             stringRedisTemplate.opsForSet().add("short_link_uv_stats",
-                    fullShortUrl + uuid);
+                    fullShortUrl + uv.get());
             response.addCookie(cookie);
         };
         AtomicBoolean atomicBoolean=new AtomicBoolean(true);
@@ -305,6 +308,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .findFirst()
                     .map(Cookie::getValue)
                     .ifPresentOrElse(each->{
+                        uv.set(each);
                         Long added = stringRedisTemplate.opsForSet().add("short_link_uv_stats",
                                 fullShortUrl + each);
                         atomicBoolean.set(added!=null&&added>1L);
@@ -314,7 +318,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }
         String ip = IpUtil.getRealIp(request);
         Long added = stringRedisTemplate.opsForSet().add("short_link_uip_stats", ip);
-        ShortLinkAccessStatsDO shortLinkAccessStatsDO = ShortLinkAccessStatsDO.builder()
+        LinkAccessStatsDO linkAccessStatsDO = LinkAccessStatsDO.builder()
                 .pv(1)
                 .uv(atomicBoolean.get()?1:0)
                 .uip(added!=null&&added>0?1:0)
@@ -324,13 +328,13 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .weekday(DateUtil.dayOfWeekEnum(new Date()).getValue())
                 .fullShortUrl(fullShortUrl)
                 .build();
-        shortLinkAccessStatsDOMapper.shortLinkStats(shortLinkAccessStatsDO);
+        shortLinkAccessStatsDOMapper.shortLinkStats(linkAccessStatsDO);
         AmapIpLocationResult locationByIp = amapIpUtil.getLocationByIp(ip);
         String city = locationByIp.getCity();
         String province = locationByIp.getProvince();
         String adcode = locationByIp.getAdcode();
 
-        LinkLocalStatsDO linkLocalStatsDO = LinkLocalStatsDO.builder()
+        LinkLocaleStatsDO linkLocaleStatsDO = LinkLocaleStatsDO.builder()
                 .cnt(1)
                 .fullShortUrl(fullShortUrl)
                 .city(StrUtil.isBlank(city)||Objects.equals(city, "[]") ?"未知":city)
@@ -341,7 +345,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .date(new Date())
                 .build();
 
-        linkLocalStatsMapper.shortLinkLocalStats(linkLocalStatsDO);
+        linkLocalStatsMapper.shortLinkLocaleStats(linkLocaleStatsDO);
         String os = UserAgentParserUtil.getOsFromRequest(request);
         LinkOsStatsDO linkOsStatsDO = LinkOsStatsDO.builder().os(os)
                 .cnt(1)
@@ -381,6 +385,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .cnt(1)
                 .build();
         linkNetworkStatsMapper.shortLinkNetworkStats(linkNetworkStatsDO);
+
+        LinkAccessLogsDO linkAccessLogsDO = LinkAccessLogsDO.builder()
+                .ip(ip)
+                .locale(StrUtil.isBlank(city)||city.equals("[]")?"未知":city)
+                .network(network)
+                .fullShortUrl(fullShortUrl)
+                .browser(browser)
+                .user(uv.get())
+                .os(os)
+                .device(device)
+                .build();
+        linkAccessLogsMapper.insert(linkAccessLogsDO);
     }
 
     /**

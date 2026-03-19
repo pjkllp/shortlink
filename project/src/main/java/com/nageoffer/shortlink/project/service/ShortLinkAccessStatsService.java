@@ -1,11 +1,11 @@
 package com.nageoffer.shortlink.project.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.nageoffer.shortlink.project.dao.entity.ShortLinkAccessStatsDO;
+import com.nageoffer.shortlink.project.dao.entity.LinkAccessStatsDO;
 
 /**
  * 短链接监控服务
  */
-public interface ShortLinkAccessStatsService extends IService<ShortLinkAccessStatsDO> {
+public interface ShortLinkAccessStatsService extends IService<LinkAccessStatsDO> {
 
 }

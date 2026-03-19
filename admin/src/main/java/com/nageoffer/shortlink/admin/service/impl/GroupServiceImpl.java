@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
 import com.nageoffer.shortlink.admin.common.constant.Constant;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
@@ -32,7 +33,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         GroupDO groupDO = GroupDO.builder()
                 .gid(generateGroupName())
                 .sortOrder(0)
-                .username(Constant.USER_MESSAGE.get())
+                .username(UserContext.getUsername())
                 .name(groupName)
                 .build();
         baseMapper.insert(groupDO);
@@ -53,7 +54,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     public List<ShortLinkGroupRespDTO> listGroup() {
         LambdaQueryWrapper<GroupDO> groupDOLambdaQueryWrapper = Wrappers.lambdaQuery(GroupDO.class)
                 .eq(GroupDO::getDelFlag, 0)
-                .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get())
+                .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(GroupDO::getSortOrder, GroupDO::getUpdateTime);
         List<GroupDO> groupDOS = baseMapper.selectList(groupDOLambdaQueryWrapper);
         List<ShortLinkGroupCountQueryRespDTO> count = shortLinkRemoteService
@@ -69,7 +70,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     @Override
     public void updateGroup(ShortLinkGroupUpdateReq requestParam) {
         LambdaUpdateWrapper<GroupDO> eq = Wrappers.lambdaUpdate(GroupDO.class)
-                .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get())
+                .eq(GroupDO::getUsername, UserContext.getUsername())
                 .eq(GroupDO::getGid, requestParam.getGid())
                 .eq(GroupDO::getDelFlag, 0);
         baseMapper.update(GroupDO.builder().name(requestParam.getName()).build(),eq);
@@ -79,7 +80,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     public void deleteGroup(String gid) {
         LambdaUpdateWrapper<GroupDO> eq = Wrappers.lambdaUpdate(GroupDO.class)
                 .eq(GroupDO::getGid, gid)
-                .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get());
+                .eq(GroupDO::getUsername, UserContext.getUsername());
         baseMapper.update(GroupDO.builder().delFlag(1).build(),eq);
     }
 
@@ -90,7 +91,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
                     .sortOrder(item.getSortOrder())
                     .build();
             LambdaUpdateWrapper<GroupDO> eq = Wrappers.lambdaUpdate(GroupDO.class)
-                    .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get())
+                    .eq(GroupDO::getUsername, UserContext.getUsername())
                     .eq(GroupDO::getGid, item.getGid());
             baseMapper.update(groupDO,eq);
         });
@@ -104,7 +105,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
             LambdaQueryWrapper<GroupDO> eq = Wrappers.lambdaQuery(GroupDO.class)
                     .eq(GroupDO::getGid, groupId)
                     //TODO 设置用户名
-                    .eq(GroupDO::getUsername, Constant.USER_MESSAGE.get());
+                    .eq(GroupDO::getUsername,UserContext.getUsername());
             groupDO = baseMapper.selectOne(eq);
 
         }while (groupDO!=null);

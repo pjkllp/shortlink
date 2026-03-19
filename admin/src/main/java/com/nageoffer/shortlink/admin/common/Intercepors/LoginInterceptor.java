@@ -1,5 +1,7 @@
 package com.nageoffer.shortlink.admin.common.Intercepors;
 
+import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
+import com.nageoffer.shortlink.admin.common.biz.user.UserInfo;
 import com.nageoffer.shortlink.admin.common.constant.Constant;
 import com.nageoffer.shortlink.admin.toolkit.JwtUtil;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +35,7 @@ public class LoginInterceptor implements HandlerInterceptor {
         String username = JwtUtil.parseJwt(token);
         String token2 = stringRedisTemplate.opsForValue().get(Constant.USER_LOGIN + username);
         if(username!=null&&token2!=null&&!token2.isEmpty()&&token2.equals(token)){
-            Constant.USER_MESSAGE.set(username);
+            UserContext.setUser(UserInfo.builder().username(username).build());
             return true;
         }else{
             response.setStatus(401);
@@ -47,6 +49,6 @@ public class LoginInterceptor implements HandlerInterceptor {
 
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
-        Constant.USER_MESSAGE.remove();
+        UserContext.removeUser();
     }
 }

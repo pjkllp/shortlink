@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nageoffer.shortlink.project.dao.mapper.LinkAccessLogsMapper">
+
+
+    <select id="findPvUvUidStatsByShortLink"
+            resultType="com.nageoffer.shortlink.project.dao.entity.LinkAccessStatsDO">
+        SELECT
+            COUNT(tlal.user) AS pv,
+            COUNT(DISTINCT tlal.user) AS uv,
+            COUNT(DISTINCT tlal.ip) AS uip
+        FROM
+            t_link tl INNER JOIN
+            t_link_access_logs tlal ON tl.full_short_url = tlal.full_short_url
+        WHERE
+            tlal.full_short_url = #{fullShortUrl}
+          AND tl.gid = #{gid}
+          AND tl.del_flag = '0'
+          AND tl.enable_status = '0'
+          AND tlal.create_time BETWEEN #{startDate} and #{endDate}
+        GROUP BY
+            tlal.full_short_url, tl.gid;
+    </select>
+</mapper>
