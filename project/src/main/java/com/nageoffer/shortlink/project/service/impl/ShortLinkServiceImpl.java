@@ -80,6 +80,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final LinkBrowserStatsMapper linkBrowserStatsMapper;
 
+    private final LinkDeviceStatsMapper linkDeviceStatsMapper;
+
+    private final LinkNetworkStatsMapper linkNetworkStatsMapper;
+
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
     @Value("${short-link.protocol}")
@@ -197,6 +201,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         String serverName = request.getServerName();
@@ -356,6 +361,26 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .date(new Date())
                 .build();
         linkBrowserStatsMapper.shortLinkBrowserStats(linkBrowserStatsDO);
+
+        String device = UserAgentParserUtil.getDeviceFromRequest(request);
+        LinkDeviceStatsDO linkDeviceStatsDO = LinkDeviceStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .cnt(1)
+                .date(new Date())
+                .device(device)
+                .build();
+        linkDeviceStatsMapper.shortLinkDeviceStats(linkDeviceStatsDO);
+
+        String network = UserAgentParserUtil.getNetworkTypeFromRequest(request);
+        LinkNetworkStatsDO linkNetworkStatsDO = LinkNetworkStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(new Date())
+                .network(network)
+                .cnt(1)
+                .build();
+        linkNetworkStatsMapper.shortLinkNetworkStats(linkNetworkStatsDO);
     }
 
     /**
