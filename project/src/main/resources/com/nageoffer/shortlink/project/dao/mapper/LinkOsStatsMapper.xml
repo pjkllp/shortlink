@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.nageoffer.shortlink.project.dao.mapper.LinkOsStatsMapper">
+
+
+    <insert id="shortLinkOsStats">
+        INSERT INTO t_link_os_stats
+        (id,
+         full_short_url,
+         gid,
+         `date`,
+         cnt,
+         create_time,
+         update_time,
+         del_flag,
+         os
+        ) VALUES (
+                     #{id},
+                     #{fullShortUrl},
+                     #{gid},
+                     #{date},
+                     #{cnt},
+                     NOW(),
+                     NOW(),
+                     0,
+                     #{os}
+                 )
+            ON DUPLICATE KEY UPDATE
+                                 cnt = cnt + #{cnt},
+                                 update_time = NOW()
+    </insert>
+</mapper>

@@ -19,6 +19,12 @@
             <artifactId>fastjson2</artifactId>
             <version>2.0.48</version> <!-- 用最新稳定版 -->
         </dependency>
+        <!-- 新版uap-java的正确依赖坐标 -->
+        <dependency>
+            <groupId>com.github.ua-parser</groupId>
+            <artifactId>uap-java</artifactId>
+            <version>1.5.4</version>
+        </dependency>
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>

@@ -14,14 +14,8 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
-import com.nageoffer.shortlink.project.dao.entity.LinkLocalStatsDO;
-import com.nageoffer.shortlink.project.dao.entity.ShortLinkAccessStatsDO;
-import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
-import com.nageoffer.shortlink.project.dao.entity.ShortLinkGotoDO;
-import com.nageoffer.shortlink.project.dao.mapper.LinkLocalStatsMapper;
-import com.nageoffer.shortlink.project.dao.mapper.ShortLinkAccessStatsMapper;
-import com.nageoffer.shortlink.project.dao.mapper.ShortLinkGotoMapper;
-import com.nageoffer.shortlink.project.dao.mapper.ShortLinkMapper;
+import com.nageoffer.shortlink.project.dao.entity.*;
+import com.nageoffer.shortlink.project.dao.mapper.*;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
@@ -30,11 +24,8 @@ import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
 import com.nageoffer.shortlink.project.service.LinkLocalStatsService;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
-import com.nageoffer.shortlink.project.toolkit.AmapIpUtil;
+import com.nageoffer.shortlink.project.toolkit.*;
 import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
-import com.nageoffer.shortlink.project.toolkit.HashUtil;
-import com.nageoffer.shortlink.project.toolkit.IpUtil;
-import com.nageoffer.shortlink.project.toolkit.ShortLinkUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -84,6 +75,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkLocalStatsMapper linkLocalStatsMapper;
 
     private final AmapIpUtil amapIpUtil;
+
+    private final LinkOsStatsMapper linkOsStatsMapper;
 
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
@@ -340,7 +333,17 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .country("未知")
                 .date(new Date())
                 .build();
+
         linkLocalStatsMapper.shortLinkLocalStats(linkLocalStatsDO);
+        String os = UserAgentParserUtil.getOsFromRequest(request);
+        LinkOsStatsDO linkOsStatsDO = LinkOsStatsDO.builder().os(os)
+                .cnt(1)
+                .date(new Date())
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .build();
+        linkOsStatsMapper.shortLinkOsStats(linkOsStatsDO);
+
     }
 
     /**
