@@ -6,14 +6,13 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
-import com.nageoffer.shortlink.admin.common.constant.Constant;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupUpdateReq;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
+import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Service.ShortLinkRemoteService;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.toolkit.RandomGeneratorUtil;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
 
-    private final ShortLinkRemoteService shortLinkRemoteService;
+    private final ShortLinkActualRemoteService shortLinkActualRemoteService;
     @Override
     public void saveGroup(String groupName) {
         GroupDO groupDO = GroupDO.builder()
@@ -57,8 +56,8 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(GroupDO::getSortOrder, GroupDO::getUpdateTime);
         List<GroupDO> groupDOS = baseMapper.selectList(groupDOLambdaQueryWrapper);
-        List<ShortLinkGroupCountQueryRespDTO> count = shortLinkRemoteService
-                .count(groupDOS.stream().map(GroupDO::getGid).toList());
+        List<ShortLinkGroupCountQueryRespDTO> count = shortLinkActualRemoteService
+                .count(groupDOS.stream().map(GroupDO::getGid).toList()).getData();
         return groupDOS.stream().map(item -> {
             ShortLinkGroupRespDTO bean = BeanUtil.toBean(item, ShortLinkGroupRespDTO.class);
             Optional<ShortLinkGroupCountQueryRespDTO> first = count.stream().filter(each -> Objects.equals(bean.getGid(), each.getGid())).findFirst();

@@ -8,7 +8,7 @@ import lombok.Data;
  * 短链接分页请求参数
  */
 @Data
-public class ShortLinkPageReqTO extends Page<ShortLinkDO> {
+public class ShortLinkPageReqDTO extends Page<ShortLinkDO> {
     /**
      * 分组标识
      */

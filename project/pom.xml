@@ -89,5 +89,9 @@
             <version>0.11.5</version>
             <scope>runtime</scope> <!-- 关键：运行时依赖，必须加 -->
         </dependency>
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
     </dependencies>
 </project>

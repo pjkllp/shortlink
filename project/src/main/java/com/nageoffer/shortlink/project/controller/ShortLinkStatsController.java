@@ -26,7 +26,7 @@ public class ShortLinkStatsController {
      * @param requestParam
      * @return
      */
-    @GetMapping("/api/short-link/v1/stats")
+    @GetMapping("/api/short-link/project/v1/stats")
     public Result<ShortLinkStatsRespDTO> shortLinkStats(ShortLinkStatsReqDTO requestParam){
         ShortLinkStatsRespDTO shortLinkStatsRespDTO = shortLinkStatsService.oneShortLinkStats(requestParam);
         return Result.success(shortLinkStatsRespDTO);
@@ -37,7 +37,7 @@ public class ShortLinkStatsController {
      * @param requestParam 分页入参
      * @return 分页返回
      */
-    @GetMapping("/api/short-link/v1/statsAccessRecord")
+    @GetMapping("/api/short-link/project/v1/statsAccessRecord")
     public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> statsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam){
         return Result.success(shortLinkStatsService.statusAccessRecord(requestParam));
     }

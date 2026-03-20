@@ -9,5 +9,52 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
     <artifactId>shortlink-gateway</artifactId>
+    <dependencies>
+        <!-- Spring Cloud Gateway 核心依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
+        </dependency>
 
+        <!-- Nacos 服务发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <!-- LoadBalancer（负载均衡，必须加） -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba.fastjson2</groupId>
+            <artifactId>fastjson2</artifactId>
+            <version>2.0.48</version> <!-- 用最新稳定版 -->
+        </dependency>
+        <!-- 1. JWT 核心接口（compile 范围，编译时需要） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.11.5</version>
+        </dependency>
+        <!-- 2. JWT 接口实现（runtime 范围，运行时必须加载） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope> <!-- 关键：运行时依赖，必须加 -->
+        </dependency>
+        <!-- 3. JWT JSON 序列化支持（runtime 范围，解决 Serializer 依赖） -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.11.5</version>
+            <scope>runtime</scope> <!-- 关键：运行时依赖，必须加 -->
+        </dependency>
+    </dependencies>
 </project>

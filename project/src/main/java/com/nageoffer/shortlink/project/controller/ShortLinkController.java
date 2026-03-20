@@ -3,7 +3,7 @@ package com.nageoffer.shortlink.project.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
-import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqTO;
+import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
@@ -12,7 +12,6 @@ import com.nageoffer.shortlink.project.service.ShortLinkService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -38,16 +37,16 @@ public class ShortLinkController {
      * @param requestParam
      * @return
      */
-    @PostMapping("/api/short-link/project/v1/page")
-    public ResponseEntity<Result<IPage<ShortLinkPageRespDTO>>> pageShortLink(@RequestBody ShortLinkPageReqTO requestParam){
-        return ResponseEntity.ok(Result.success(shortLinkService.pageShortLink(requestParam)));
+    @GetMapping("/api/short-link/project/v1/page")
+    public Result<IPage<ShortLinkPageRespDTO>> pageShortLink(ShortLinkPageReqDTO requestParam){
+        return Result.success(shortLinkService.pageShortLink(requestParam));
     }
 
     /**
      * 查询分组下的短链接数
      */
     @GetMapping("/api/short-link/project/v1/count")
-    public Result<List<ShortLinkGroupCountQueryRespDTO>> groupShortLinkCount(@RequestParam List<String> requestParam){
+    public Result<List<ShortLinkGroupCountQueryRespDTO>> groupShortLinkCount(@RequestParam("gids") List<String> requestParam){
         return Result.success("查询成功",shortLinkService.listGroupShortLinkCount(requestParam));
     }
 

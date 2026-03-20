@@ -20,6 +20,10 @@ spring:
       port: 6379
       password: 123456
       database: 0
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8849
   mvc:
     view:
       prefix: /templates/
@@ -32,11 +36,3 @@ gaode:
   amap:
     key: c2a69289fa819a2e36b6e467c82d692c
 
-mybatis-plus:
-  configuration:
-    # 开启日志（打印 SQL 和参数）
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    # 日志级别（可选，配合 logging 配置）
-logging:
-  level:
-    com.nageoffer.shortlink.project.dao.mapper: debug

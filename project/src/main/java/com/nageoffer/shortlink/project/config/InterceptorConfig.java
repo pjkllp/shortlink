@@ -1,6 +1,6 @@
-package com.nageoffer.shortlink.admin.config;
+package com.nageoffer.shortlink.project.config;
 
-import com.nageoffer.shortlink.admin.common.web.SetInterceptor;
+import com.nageoffer.shortlink.project.common.web.SetInterceptor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;

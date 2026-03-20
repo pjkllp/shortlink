@@ -30,8 +30,8 @@ public class UrlTileController {
      * @param url 目标URL
      * @return 网站标题
      */
-    @GetMapping("/api/short-link/title")
-    public Result<String> getUrlTitle(@RequestParam String url) {
+    @GetMapping("/api/short-link/project/v1/title")
+    public Result<String> getUrlTitle(@RequestParam("url") String url) {
         String tile = urlTitleService.getTile(url);
         return Result.success("获取短链接成功",tile);
     }

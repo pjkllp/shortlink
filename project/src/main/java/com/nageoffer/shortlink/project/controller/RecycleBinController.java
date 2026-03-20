@@ -9,10 +9,7 @@ import com.nageoffer.shortlink.project.dto.Req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.RecycleBinPageRespDTO;
 import com.nageoffer.shortlink.project.service.RecycleBinService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 回收站管理控制层
@@ -26,7 +23,7 @@ public class RecycleBinController {
     /**
      * 将短链接移至回收站
      */
-    @PostMapping("/api/short-link/v1/recycle-bin/save")
+    @PostMapping("/api/short-link/project/v1/recycle-bin/save")
     public Result<Void> saveRecycleBin(@RequestBody RecycleBinSaveReqDTO requestParam) throws InterruptedException {
         recycleBinService.recycleBinSave(requestParam);
         return Result.success("添加回收站成功");
@@ -35,21 +32,21 @@ public class RecycleBinController {
     /**
      * 分页查询短链接
      */
-    @PostMapping("/api/short-link/v1/recycle-bin/page")
-    public Result<IPage<RecycleBinPageRespDTO>> pageRecycleBin(@RequestBody RecycleBinPageReqDTO requestParam){
+    @GetMapping("/api/short-link/project/v1/recycle-bin/page")
+    public Result<IPage<RecycleBinPageRespDTO>> pageRecycleBin(RecycleBinPageReqDTO requestParam){
         return Result.success(recycleBinService.recycleBinPage(requestParam));
     }
 
     /**
      * 移除回收站
      */
-    @PostMapping("/api/short-link/v1/recycle-bin/recover")
+    @PostMapping("/api/short-link/project/v1/recycle-bin/recover")
     public Result<Void> recover(@RequestBody RecycleBinRecoverReqDTO requestParam){
         recycleBinService.recycleBinRecover(requestParam);
         return Result.success("移除成功");
     }
 
-    @PostMapping("/api/short-link/v1/recycle-bin/remove")
+    @PostMapping("/api/short-link/project/v1/recycle-bin/remove")
     public Result<Void> remove(@RequestBody RecycleBinRemoveReqDTO requestParam){
         recycleBinService.recycleBinRemove(requestParam);
         return Result.success("删除成功");

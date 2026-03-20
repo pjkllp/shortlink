@@ -1,2 +1,33 @@
 server:
-  port: 8000
+  port: 8000  # 网关端口，用户访问这个端口
+
+spring:
+  application:
+    name: shortlink-gateway  # 网关在 Nacos 里的服务名
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 127.0.0.1:8849  # 你的 Nacos 服务端口（不是控制台 8080）
+    gateway:
+      routes:
+        # 路由到 shortlink-admin 服务（你截图里的 admin 服务）
+        - id: shortlink-admin
+          uri: lb://shortlink-admin  # lb:// 代表负载均衡，从 Nacos 找服务
+          predicates:
+            - Path=/api/short-link/admin/**  # 匹配 admin 接口路径
+          filters:
+#            - StripPrefix=1  # 去掉 /api 前缀，转发给 admin 时变成 /short-link/admin/**
+
+        # 路由到 shortlink-project 服务（核心短链接服务）
+        - id: shortlink-project
+          uri: lb://shortlink-project
+          predicates:
+            - Path=/api/short-link/project/**
+#          filters:
+#            - StripPrefix=1
+  data:
+    redis:
+      host: 192.168.100.152
+      port: 6379
+      password: 123456
+      database: 0

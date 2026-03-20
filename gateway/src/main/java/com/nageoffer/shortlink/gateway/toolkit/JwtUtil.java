@@ -1,10 +1,8 @@
-package com.nageoffer.shortlink.admin.toolkit;
+package com.nageoffer.shortlink.gateway.toolkit;
 
-import com.nageoffer.shortlink.admin.common.enums.UserErrorCode;
-import com.nageoffer.shortlink.admin.common.exceptions.ClientException;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.nageoffer.shortlink.gateway.common.enums.UserErrorCode;
+import com.nageoffer.shortlink.gateway.common.exceptions.ClientException;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

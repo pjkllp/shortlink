@@ -38,7 +38,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
     @Override
     public ShortLinkStatsRespDTO oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
         // TODO 校验逻辑之后再做
-//        checkGroupBelongToUser(requestParam.getGid());
+        checkGroupBelongToUser(requestParam.getGid());
         List<LinkAccessStatsDO> listStatsByShortLink = linkAccessStatsMapper.listStatsByShortLink(requestParam);
         if (CollUtil.isEmpty(listStatsByShortLink)) {
             return null;
@@ -217,9 +217,9 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
             networkStats.add(networkRespDTO);
         });
         return ShortLinkStatsRespDTO.builder()
-                .pv(pvUvUidStatsByShortLink.getPv())
-                .uv(pvUvUidStatsByShortLink.getUv())
-                .uip(pvUvUidStatsByShortLink.getUip())
+                .pv(Optional.ofNullable(pvUvUidStatsByShortLink).map(LinkAccessStatsDO::getPv).orElse(0))
+                .uv(Optional.ofNullable(pvUvUidStatsByShortLink).map(LinkAccessStatsDO::getUv).orElse(0))
+                .uip(Optional.ofNullable(pvUvUidStatsByShortLink).map(LinkAccessStatsDO::getUip).orElse(0))
                 .daily(daily)
                 .localeCnStats(localeCnStats)
                 .hourStats(hourStats)
