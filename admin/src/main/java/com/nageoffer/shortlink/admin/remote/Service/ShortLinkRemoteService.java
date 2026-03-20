@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.admin.remote.dto.Service;
+package com.nageoffer.shortlink.admin.remote.Service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;

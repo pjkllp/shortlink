@@ -1,10 +1,15 @@
 package com.nageoffer.shortlink.project.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
  * 访问日志监控实体
@@ -60,4 +65,17 @@ public class LinkAccessLogsDO  {
      * 地区
      */
     private String locale;
+
+    /**
+     * 删除标识
+     */
+    private Integer delFlag;
+
+    /**
+     * 创建日期
+     */
+    @TableField(value = "create_time", fill = FieldFill.INSERT) // 插入时自动填充
+    @JsonFormat(pattern = "YYYY-MM-dd HH-mm-ss")
+    private Date createTime;
+
 }

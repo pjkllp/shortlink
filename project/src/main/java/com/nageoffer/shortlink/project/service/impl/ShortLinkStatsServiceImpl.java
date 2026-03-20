@@ -1,14 +1,18 @@
 package com.nageoffer.shortlink.project.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateField;
 import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.shortlink.project.common.biz.user.UserContext;
+import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.*;
 import com.nageoffer.shortlink.project.dao.mapper.*;
+import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.*;
 import com.nageoffer.shortlink.project.service.ShortLinkStatsService;
@@ -227,6 +231,32 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                 .deviceStats(deviceStats)
                 .networkStats(networkStats)
                 .build();
+    }
+
+    @Override
+    public IPage<ShortLinkStatsAccessRecordRespDTO> statusAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+        LambdaQueryWrapper<LinkAccessLogsDO> logsDOLambdaQueryWrapper = Wrappers.lambdaQuery(LinkAccessLogsDO.class)
+                .eq(LinkAccessLogsDO::getFullShortUrl, requestParam.getFullShortUrl())
+                .between(LinkAccessLogsDO::getCreateTime, requestParam.getStartDate(), requestParam.getEndDate())
+                .eq(LinkAccessLogsDO::getDelFlag, 0);
+        IPage<LinkAccessLogsDO> page = linkAccessLogsMapper.selectPage(requestParam, logsDOLambdaQueryWrapper);
+        IPage<ShortLinkStatsAccessRecordRespDTO> convert = page.convert(each -> BeanUtil.toBean(each, ShortLinkStatsAccessRecordRespDTO.class));
+        List<ShortLinkStatsAccessRecordRespDTO> records = convert.getRecords();
+        List<Map<String, Object>> maps = linkAccessLogsMapper.selectUvTypeByUsers(requestParam.getGid()
+                , requestParam.getFullShortUrl()
+                , 0, requestParam.getStartDate()
+                , requestParam.getEndDate(), records.stream()
+                        .map(ShortLinkStatsAccessRecordRespDTO::getUser).toList());
+        records.forEach(
+                each->{
+                    maps.forEach(pr->{
+                        if(each.getUser().equals(pr.get("user"))){
+                            each.setUvType((String) pr.get("uvType"));
+                        }
+                    });
+                }
+        );
+        return convert;
     }
 
     public void checkGroupBelongToUser(String gid) throws ServiceException {
