@@ -19,7 +19,7 @@ public class ShortLinkUpdateReqDTO {
     private String originUrl;
 
     /**
-     * 完整短链接
+     * 完整短链�?
      */
     private String fullShortUrl;
 
@@ -29,7 +29,7 @@ public class ShortLinkUpdateReqDTO {
     private Integer validDataType;
 
     /**
-     * 有效期
+     * 有效�?
      */
     private Date validData;
 
@@ -42,14 +42,14 @@ public class ShortLinkUpdateReqDTO {
      * 创建时间
      */
     @TableField(fill = FieldFill.INSERT)
-    @JsonFormat(pattern = "yyyy-MM-dd HH-mm-ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date createTime;
 
     /**
      * 更新时间
      */
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    @JsonFormat(pattern = "yyyy-MM-dd HH-mm-ss",timezone = "GMT+8")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date updateTime;
 
     /**

@@ -7,6 +7,7 @@ import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.project.common.biz.user.UserContext;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
@@ -234,7 +235,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
     }
 
     @Override
-    public IPage<ShortLinkStatsAccessRecordRespDTO> statusAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+    public Page<ShortLinkStatsAccessRecordRespDTO> statusAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
         LambdaQueryWrapper<LinkAccessLogsDO> logsDOLambdaQueryWrapper = Wrappers.lambdaQuery(LinkAccessLogsDO.class)
                 .eq(LinkAccessLogsDO::getFullShortUrl, requestParam.getFullShortUrl())
                 .between(LinkAccessLogsDO::getCreateTime, requestParam.getStartDate(), requestParam.getEndDate())
@@ -256,7 +257,7 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                     });
                 }
         );
-        return convert;
+        return (Page<ShortLinkStatsAccessRecordRespDTO>) convert;
     }
 
     public void checkGroupBelongToUser(String gid) throws ServiceException {

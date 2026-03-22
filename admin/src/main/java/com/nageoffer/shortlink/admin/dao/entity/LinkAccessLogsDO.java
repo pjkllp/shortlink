@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.project.dao.entity;
+package com.nageoffer.shortlink.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
@@ -27,7 +27,7 @@ public class LinkAccessLogsDO  {
     private Long id;
 
     /**
-     * 完整短链�?
+     * 完整短链�?
      */
     private String fullShortUrl;
 
@@ -37,7 +37,7 @@ public class LinkAccessLogsDO  {
     private String user;
 
     /**
-     * 浏览�?
+     * 浏览�?
      */
     private String browser;
 
@@ -74,7 +74,7 @@ public class LinkAccessLogsDO  {
     /**
      * 创建日期
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT) // 插入时自动填�?
+    @TableField(value = "create_time", fill = FieldFill.INSERT) // 插入时自动填�?
     @JsonFormat(pattern = "YYYY-MM-dd HH:mm:ss")
     private Date createTime;
 

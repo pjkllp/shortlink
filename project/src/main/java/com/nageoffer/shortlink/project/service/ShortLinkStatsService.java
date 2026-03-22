@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
@@ -20,5 +21,5 @@ public interface ShortLinkStatsService {
      */
     ShortLinkStatsRespDTO oneShortLinkStats(ShortLinkStatsReqDTO requestParam);
 
-    IPage<ShortLinkStatsAccessRecordRespDTO> statusAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam);
+    Page<ShortLinkStatsAccessRecordRespDTO> statusAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam);
 }

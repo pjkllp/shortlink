@@ -1,21 +1,19 @@
 package com.nageoffer.shortlink.admin.remote.Service;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.*;
-import com.nageoffer.shortlink.admin.remote.dto.Resp.RecycleBinPageRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkGroupCountQueryRespDTO;
-import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Resp.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.cloud.openfeign.SpringQueryMap;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @FeignClient("shortlink-project")
+@Component
 public interface ShortLinkActualRemoteService {
     /**
      * 远程调用查询各分组短链接数量
@@ -63,7 +61,7 @@ public interface ShortLinkActualRemoteService {
      * @return 回收站分页查询响应参数
      */
     @GetMapping("/api/short-link/project/v1/recycle-bin/page")
-    Result<IPage<RecycleBinPageRespDTO>> recycleBinPage(RecycleBinPageReqDTO requestParam);
+    Result<Page<RecycleBinPageRespDTO>> recycleBinPage(@SpringQueryMap RecycleBinPageReqDTO requestParam);
 
     /**
      * 将短链接从回收站恢复
@@ -81,4 +79,19 @@ public interface ShortLinkActualRemoteService {
     @PostMapping("/api/short-link/project/v1/recycle-bin/remove")
     Result<Void> recycleBinRemove(@RequestBody RecycleBinRemoveReqDTO requestParam);
 
+    /**
+     * 短链接访客记录远程调用
+     * @param requestParam
+     * @return
+     */
+    @GetMapping("/api/short-link/project/v1/statsAccessRecord")
+    Result<Page<ShortLinkStatsAccessRecordRespDTO>> statsAccessRecord(@SpringQueryMap ShortLinkStatsAccessRecordReqDTO requestParam);
+
+    /**
+     * 短链接基本统计远程调用
+     * @param requestParam
+     * @return
+     */
+    @GetMapping("/api/short-link/project/v1/stats")
+    Result<ShortLinkStatsRespDTO> stats(@SpringQueryMap ShortLinkStatsReqDTO requestParam);
 }

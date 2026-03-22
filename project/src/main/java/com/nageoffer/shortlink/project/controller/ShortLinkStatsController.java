@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.project.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkGroupStatsAccessRecordReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsAccessRecordReqDTO;
@@ -38,7 +39,7 @@ public class ShortLinkStatsController {
      * @return 分页返回
      */
     @GetMapping("/api/short-link/project/v1/statsAccessRecord")
-    public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> statsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam){
+    public Result<Page<ShortLinkStatsAccessRecordRespDTO>> statsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam){
         return Result.success(shortLinkStatsService.statusAccessRecord(requestParam));
     }
 

@@ -3,14 +3,18 @@ package com.nageoffer.shortlink.gateway.common.web;
 import com.nageoffer.shortlink.gateway.common.biz.user.UserContext;
 import com.nageoffer.shortlink.gateway.common.biz.user.UserInfo;
 import com.nageoffer.shortlink.gateway.common.constant.Constant;
+import com.nageoffer.shortlink.gateway.common.exceptions.ClientException;
 import com.nageoffer.shortlink.gateway.toolkit.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
+import org.springframework.scripting.support.ResourceScriptSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebFilter;
@@ -18,7 +22,9 @@ import org.springframework.web.server.WebFilterChain;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.List;
 
 /**
  * 登录鉴权全局过滤器（替代原 Spring MVC 拦截器）
@@ -36,6 +42,8 @@ public class AuthGlobalFilter implements WebFilter {
                     "|^/api/short-link/admin/v1/login$" +
                     "|^/api/short-link/admin/v1/logout$"
     );
+
+    private static String USER_RISK_CONTROL_LUA_PATH="jetbrains://idea/navigate/reference?project=shortlink&path=lua/user_rist_contro.lua";
 
     /**
      * 核心过滤逻辑（对应原 preHandle 方法）
@@ -66,6 +74,18 @@ public class AuthGlobalFilter implements WebFilter {
         String redisToken = stringRedisTemplate.opsForValue().get(Constant.USER_LOGIN + username);
         if (username == null || redisToken == null || redisToken.isEmpty() || !redisToken.equals(token)) {
             return writeUnauthorizedResponse(response, "用户未登录");
+        }
+
+        DefaultRedisScript<Long> script=new DefaultRedisScript<>();
+
+        script.setScriptSource(new ResourceScriptSource(new ClassPathResource(USER_RISK_CONTROL_LUA_PATH)));
+        script.setResultType(Long.class);
+        Long result = stringRedisTemplate.execute(script, List.of(
+                "rate:limit:user:"+username+"path:"+path
+        ), 3, 1);
+
+        if(Optional.ofNullable(result).orElse(0L) ==0){
+            throw new ClientException("请求过多请稍后再试");
         }
 
         ServerHttpRequest newRequest = request.mutate().header("username", username).build();

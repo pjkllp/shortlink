@@ -3,8 +3,11 @@ package com.nageoffer.shortlink.project.dto.Resp;
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.Date;
 
@@ -13,6 +16,8 @@ import java.util.Date;
  */
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ShortLinkCreateRespDTO {
     /**
      * 分组信息

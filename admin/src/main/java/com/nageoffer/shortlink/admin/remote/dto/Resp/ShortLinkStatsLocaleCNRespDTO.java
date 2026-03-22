@@ -6,25 +6,26 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 短链接创建返回对象
+ * 短链接地区监控响应参数
  */
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class ShortLinkCreateRespDTO {
-    /**
-     * 分组信息
-     */
-    private  String gid;
+@AllArgsConstructor
+public class ShortLinkStatsLocaleCNRespDTO {
 
     /**
-     * 原始链接
+     * 统计
      */
-    private String originUrl;
+    private Integer cnt;
 
     /**
-     * 完整短链接
+     * 地区
      */
-    private String fullShortUrl;
+    private String locale;
+
+    /**
+     * 占比
+     */
+    private Double ratio;
 }

@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.nageoffer.shortlink.project.dao.entity.ShortLinkDO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinPageReqDTO;
@@ -26,7 +27,7 @@ public interface RecycleBinService extends IService<ShortLinkDO> {
      * @param requestParam 入参
      * @return 分页后的响应实体
      */
-    IPage<RecycleBinPageRespDTO> recycleBinPage(RecycleBinPageReqDTO requestParam);
+    Page<RecycleBinPageRespDTO> recycleBinPage(RecycleBinPageReqDTO requestParam);
 
     /**
      * 将回收站的短链接移除

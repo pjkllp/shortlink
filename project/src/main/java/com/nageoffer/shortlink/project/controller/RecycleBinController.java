@@ -1,6 +1,7 @@
 package com.nageoffer.shortlink.project.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinPageReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.RecycleBinRecoverReqDTO;
@@ -33,7 +34,7 @@ public class RecycleBinController {
      * 分页查询短链接
      */
     @GetMapping("/api/short-link/project/v1/recycle-bin/page")
-    public Result<IPage<RecycleBinPageRespDTO>> pageRecycleBin(RecycleBinPageReqDTO requestParam){
+    public Result<Page<RecycleBinPageRespDTO>> pageRecycleBin(RecycleBinPageReqDTO requestParam){
         return Result.success(recycleBinService.recycleBinPage(requestParam));
     }
 
