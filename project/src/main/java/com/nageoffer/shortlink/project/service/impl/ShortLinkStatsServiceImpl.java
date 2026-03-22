@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.project.common.biz.user.UserContext;
-import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.*;
 import com.nageoffer.shortlink.project.dao.mapper.*;

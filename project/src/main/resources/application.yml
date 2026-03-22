@@ -9,9 +9,9 @@ spring:
     url: jdbc:shardingsphere:classpath:shardingsphere-config.yaml
     hikari:
       pool-name: HikariPool-1
-      maximum-pool-size: 10
-      minimum-idle: 5
-      idle-timeout: 600000
+      maximum-pool-size: 40
+      minimum-idle: 20
+      idle-timeout: 500
       connection-timeout: 30000
       max-lifetime: 1800000
   data:
@@ -35,4 +35,14 @@ short-link:
 gaode:
   amap:
     key: c2a69289fa819a2e36b6e467c82d692c
+# RocketMQ 核心配置
+rocketmq:
+  name-server: 192.168.100.152:9876  # 虚拟机 NameServer 地址（关键！）
+  producer:
+    group: default-producer-group  # 生产者组名，自定义
+    send-message-timeout: 3000  # 发送超时时间
+    retry-times-when-send-failed: 2  # 发送失败重试次数
+  consumer:
+    group: default-consumer-group  # 消费者组名，自定义
+    enable-msg-trace: true
 

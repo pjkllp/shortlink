@@ -1,17 +1,16 @@
 package com.nageoffer.shortlink.admin.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.handler.ShortLinkBlockHandler;
 import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -33,8 +32,16 @@ public class ShortLinkController {
      * @param requestParam
      * @return
      */
+    @SentinelResource(
+            value = "short-link-create",
+            blockHandlerClass = ShortLinkBlockHandler.class,
+            fallbackClass = ShortLinkBlockHandler.class
+    )
     @PostMapping("/api/short-link/admin/v1/link")
-    public Result<ShortLinkCreateRespDTO> create(@RequestBody ShortLinkCreateReqDTO requestParam){
+    public Result<ShortLinkCreateRespDTO> create(
+            @RequestHeader("username") String username,
+            @RequestBody ShortLinkCreateReqDTO requestParam
+    ){
         return shortLinkActualRemoteService.createShortLink(requestParam);
     }
 }

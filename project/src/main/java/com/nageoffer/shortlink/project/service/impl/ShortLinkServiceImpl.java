@@ -6,6 +6,8 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.text.StrBuilder;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -22,6 +24,7 @@ import com.nageoffer.shortlink.project.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkGroupCountQueryRespDTO;
 import com.nageoffer.shortlink.project.dto.Resp.ShortLinkPageRespDTO;
+import com.nageoffer.shortlink.project.dto.ShortLinkStatsMessageDTO;
 import com.nageoffer.shortlink.project.service.ShortLinkService;
 import com.nageoffer.shortlink.project.toolkit.*;
 import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
@@ -30,6 +33,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.client.producer.SendCallback;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
@@ -46,6 +52,7 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -85,6 +92,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
 
     private final LinkAccessLogsMapper linkAccessLogsMapper;
+
+    private final RocketMQTemplate rocketMQTemplate;
 
     @Value("${short-link.domain.default}")
     private String createShortLinkDefaultDomain;
@@ -202,8 +211,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }
 
     }
+    private final ExecutorService statsExecutor;
 
-    @Transactional(rollbackFor = Exception.class)
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         String serverName = request.getServerName();
@@ -211,7 +220,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         String fullShortUrl=scheme+"://"+serverName+"/"+shortUri;
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
-            doLinkStats(fullShortUrl,null,request,response);
+            ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
+            statsExecutor.submit(()->{
+                sendLinkStatsMessage(fullShortUrl,null,statsMsg);
+            });
             response.sendRedirect(originalUrl);
             return;
         }
@@ -234,7 +246,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             if(!locked){
                 originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
                 if (StrUtil.isNotBlank(originalUrl)){
-                    doLinkStats(fullShortUrl,null,request,response);
+                    ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
+                    statsExecutor.submit(()->{
+                        sendLinkStatsMessage(fullShortUrl,null,statsMsg);
+                    });
                     response.sendRedirect(originalUrl);
                     return;
                 }
@@ -243,8 +258,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             //获取到锁了之后也可能是前一个获取到锁的线程在三秒内查询数据库添加缓存，释放了锁让我们抢到了
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)){
+                ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
+                statsExecutor.submit(()->{
+                    sendLinkStatsMessage(fullShortUrl,null,statsMsg);
+                });
                 response.sendRedirect(originalUrl);
-                doLinkStats(fullShortUrl,null,request,response);
                 return;
             }
             LambdaQueryWrapper<ShortLinkGotoDO> wrapper = Wrappers.lambdaQuery(ShortLinkGotoDO.class)
@@ -271,13 +289,93 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                                 ,shortLinkDO.getOriginUrl()
                                 ,ShortLinkUtil.getValidDate(shortLinkDO.getValidData())
                                 ,TimeUnit.MILLISECONDS);
-            doLinkStats(fullShortUrl,shortLinkDO.getGid(),request,response);
+            ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
+            statsExecutor.submit(()->{
+                sendLinkStatsMessage(fullShortUrl,shortLinkDO.getGid(),statsMsg);
+            });
             response.sendRedirect(shortLinkDO.getOriginUrl());
         }finally {
-            if(locked&&lock.isHeldByCurrentThread()){
-                lock.unlock();
+            if (locked) { // 只判断是否成功拿到过锁，无需手动判断线程持有
+                try {
+                    lock.unlock(); // 依赖Redisson内置的安全校验
+                } catch (Exception e) {
+                    log.warn("释放短链接锁失败，fullShortUrl:{}", fullShortUrl, e); // 记录具体URL，便于排查
+                }
             }
         }
+    }
+
+    private ShortLinkStatsMessageDTO setUv(String fullShortUrl,HttpServletRequest request,HttpServletResponse response){
+        AtomicReference<String> uv = new AtomicReference<>();
+        AtomicBoolean isNewUv = new AtomicBoolean(true);
+        Cookie[] cookies = request.getCookies();
+
+        if (ArrayUtil.isNotEmpty(cookies)) {
+            // 有Cookie：读取UV
+            Optional<Cookie> uvCookie = Arrays.stream(cookies)
+                    .filter(each -> "short_uv".equals(each.getName()))
+                    .findFirst();
+            if (uvCookie.isPresent()) {
+                String uvValue = uvCookie.get().getValue();
+                uv.set(uvValue);
+                Long added = stringRedisTemplate.opsForSet().add("short_link_uv_stats", fullShortUrl + uvValue);
+                isNewUv.set(added != null && added > 0); // 修正：added>0才是新UV（原代码>1错误）
+            } else {
+                // 无UV Cookie：生成+设置（主线程同步执行）
+                String newUv = UUID.randomUUID().toString();
+                uv.set(newUv);
+                Cookie cookie = new Cookie("short_uv", newUv);
+                cookie.setDomain(request.getServerName());
+                cookie.setPath("/");
+                cookie.setMaxAge(365 * 24 * 60 * 60);
+                response.addCookie(cookie); // 主线程执行，安全
+                stringRedisTemplate.opsForSet().add("short_link_uv_stats", fullShortUrl + newUv);
+            }
+        } else {
+            // 无Cookie：生成+设置（主线程同步执行）
+            String newUv = UUID.randomUUID().toString();
+            uv.set(newUv);
+            Cookie cookie = new Cookie("short_uv", newUv);
+            cookie.setDomain(request.getServerName());
+            cookie.setPath("/");
+            cookie.setMaxAge(365 * 24 * 60 * 60);
+            response.addCookie(cookie); // 主线程执行，安全
+            stringRedisTemplate.opsForSet().add("short_link_uv_stats", fullShortUrl + newUv);
+        }
+
+        return ShortLinkStatsMessageDTO.builder()
+                .isNewUv(isNewUv.get())
+                .uv(uv.get())
+                .browser(UserAgentParserUtil.getBrowserFromRequest(request))
+                .device(UserAgentParserUtil.getDeviceFromRequest(request))
+                .network(UserAgentParserUtil.getNetworkTypeFromRequest(request))
+                .os(UserAgentParserUtil.getOsFromRequest(request))
+                .ip(IpUtil.getRealIp(request))
+                .build();
+    }
+
+    // 新增：收集监控数据并发送消息
+    private void sendLinkStatsMessage(String fullShortUrl, String gid,ShortLinkStatsMessageDTO statsMsg) {
+
+        Date date=new Date();
+        statsMsg.setFullShortUrl(fullShortUrl)
+                .setGid(gid)
+                .setAccessTime(date)
+                .setWeekday(DateUtil.dayOfWeekEnum(date).getValue())
+                .setHour(DateUtil.hour(date, true));
+        // 发送到专门的监控主题（short-link-stats-topic）
+        String jsonString = JSON.toJSONString(statsMsg);
+        rocketMQTemplate.asyncSend("short-link-stats-topic", jsonString, new SendCallback() {
+            @Override
+            public void onSuccess(SendResult sendResult) {
+                log.info("监控消息发送成功，fullShortUrl:{}", fullShortUrl);
+            }
+
+            @Override
+            public void onException(Throwable e) {
+                log.error("监控消息发送失败，fullShortUrl:{}", fullShortUrl, e);
+            }
+        });
     }
 
     private void doLinkStats(String fullShortUrl,String gid,HttpServletRequest request,HttpServletResponse response){
@@ -290,6 +388,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             gid=shortLinkGotoDO.getGid();
         }
         AtomicReference<String> uv=new AtomicReference<>();
+
+        //判断是否存在cookie，有cookie就用redis的set判断是否是第一次访问，set集合可以去重
         Runnable runnable=()-> {
             uv.set(UUID.randomUUID().toString());
             Cookie cookie = new Cookie("short_uv",uv.get());
@@ -316,6 +416,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }else {
             runnable.run();
         }
+        //高德地图查ip
         String ip = IpUtil.getRealIp(request);
         Long added = stringRedisTemplate.opsForSet().add("short_link_uip_stats", ip);
         LinkAccessStatsDO linkAccessStatsDO = LinkAccessStatsDO.builder()
@@ -328,12 +429,24 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .weekday(DateUtil.dayOfWeekEnum(new Date()).getValue())
                 .fullShortUrl(fullShortUrl)
                 .build();
+        //查完IP后落库
         shortLinkAccessStatsDOMapper.shortLinkStats(linkAccessStatsDO);
-        AmapIpLocationResult locationByIp = amapIpUtil.getLocationByIp(ip);
-        String city = locationByIp.getCity();
-        String province = locationByIp.getProvince();
-        String adcode = locationByIp.getAdcode();
+        String city = null;
+        String province = null;
+        String adcode = null;
 
+        //高德地图通过ip查城市
+        AmapIpLocationResult locationByIp =null;
+        try {
+            locationByIp = amapIpUtil.getLocationByIp(ip);
+        } catch (Exception e) {
+            log.warn("高德地图定位失败:{}",e.getMessage());
+        }
+        if (locationByIp!=null) {
+            city = locationByIp.getCity();
+            province = locationByIp.getProvince();
+            adcode = locationByIp.getAdcode();
+        }
         LinkLocaleStatsDO linkLocaleStatsDO = LinkLocaleStatsDO.builder()
                 .cnt(1)
                 .fullShortUrl(fullShortUrl)
@@ -344,8 +457,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .country("未知")
                 .date(new Date())
                 .build();
-
+        //查完城市后落库
         linkLocalStatsMapper.shortLinkLocaleStats(linkLocaleStatsDO);
+
+        //通过请求request查操作系统
         String os = UserAgentParserUtil.getOsFromRequest(request);
         LinkOsStatsDO linkOsStatsDO = LinkOsStatsDO.builder().os(os)
                 .cnt(1)
@@ -353,10 +468,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .fullShortUrl(fullShortUrl)
                 .gid(gid)
                 .build();
+        //查完操作系统后落库
         linkOsStatsMapper.shortLinkOsStats(linkOsStatsDO);
 
+        //通过请求request查浏览器
         String browser = UserAgentParserUtil.getBrowserFromRequest(request);
-
         LinkBrowserStatsDO linkBrowserStatsDO = LinkBrowserStatsDO.builder()
                 .fullShortUrl(fullShortUrl)
                 .browser(browser)
@@ -364,8 +480,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .gid(gid)
                 .date(new Date())
                 .build();
+        //查完浏览器后落库
         linkBrowserStatsMapper.shortLinkBrowserStats(linkBrowserStatsDO);
 
+        //通过请求request查设备
         String device = UserAgentParserUtil.getDeviceFromRequest(request);
         LinkDeviceStatsDO linkDeviceStatsDO = LinkDeviceStatsDO.builder()
                 .fullShortUrl(fullShortUrl)
@@ -374,8 +492,10 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .date(new Date())
                 .device(device)
                 .build();
+        //查完设备后落库
         linkDeviceStatsMapper.shortLinkDeviceStats(linkDeviceStatsDO);
 
+        //通过请求request查网络
         String network = UserAgentParserUtil.getNetworkTypeFromRequest(request);
         LinkNetworkStatsDO linkNetworkStatsDO = LinkNetworkStatsDO.builder()
                 .fullShortUrl(fullShortUrl)
@@ -384,6 +504,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .network(network)
                 .cnt(1)
                 .build();
+        //查完网络后落库
         linkNetworkStatsMapper.shortLinkNetworkStats(linkNetworkStatsDO);
 
         LinkAccessLogsDO linkAccessLogsDO = LinkAccessLogsDO.builder()

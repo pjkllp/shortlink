@@ -1,6 +1,8 @@
 package com.nageoffer.shortlink.project.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.nageoffer.shortlink.project.Handler.ShortLinkBlockHandler;
 import com.nageoffer.shortlink.project.common.convention.result.Result;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkPageReqDTO;
@@ -56,6 +58,13 @@ public class ShortLinkController {
         return Result.success("修改成功");
     }
 
+    @SentinelResource(
+            value = "short-link-goto-link",
+            blockHandlerClass = ShortLinkBlockHandler.class,
+            blockHandler = "blockHandlerRestoreUrl",
+            fallback = "restoreUrlFallback",
+            fallbackClass = ShortLinkBlockHandler.class
+    )
     @GetMapping("/{short-uri}")
     public Result<Void> restoreUrl(@PathVariable("short-uri")String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         shortLinkService.restoreUrl(shortUri,request,response);

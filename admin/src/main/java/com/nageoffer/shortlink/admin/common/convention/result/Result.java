@@ -64,6 +64,10 @@ public class Result<T> implements Serializable {
         return new Result<T>().setCode(iErrorCode.code()).setMessage(iErrorCode.message());
     }
 
+    public static <T> Result<T> fail(String message){
+        return new Result<T>().setMessage(message);
+    }
+
     public static <T> Result<T> fail(T data,IErrorCode iErrorCode){
         return new Result<T>().setMessage(iErrorCode.message()).setCode(iErrorCode.code()).setData(data);
     }

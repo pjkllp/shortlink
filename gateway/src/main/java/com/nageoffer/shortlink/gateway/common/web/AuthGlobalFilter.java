@@ -6,6 +6,7 @@ import com.nageoffer.shortlink.gateway.common.constant.Constant;
 import com.nageoffer.shortlink.gateway.common.exceptions.ClientException;
 import com.nageoffer.shortlink.gateway.toolkit.JwtUtil;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.annotation.Order;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -31,6 +32,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
+@Order(-100)
 public class AuthGlobalFilter implements WebFilter {
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -74,18 +76,6 @@ public class AuthGlobalFilter implements WebFilter {
         String redisToken = stringRedisTemplate.opsForValue().get(Constant.USER_LOGIN + username);
         if (username == null || redisToken == null || redisToken.isEmpty() || !redisToken.equals(token)) {
             return writeUnauthorizedResponse(response, "用户未登录");
-        }
-
-        DefaultRedisScript<Long> script=new DefaultRedisScript<>();
-
-        script.setScriptSource(new ResourceScriptSource(new ClassPathResource(USER_RISK_CONTROL_LUA_PATH)));
-        script.setResultType(Long.class);
-        Long result = stringRedisTemplate.execute(script, List.of(
-                "rate:limit:user:"+username+"path:"+path
-        ), 3, 1);
-
-        if(Optional.ofNullable(result).orElse(0L) ==0){
-            throw new ClientException("请求过多请稍后再试");
         }
 
         ServerHttpRequest newRequest = request.mutate().header("username", username).build();
