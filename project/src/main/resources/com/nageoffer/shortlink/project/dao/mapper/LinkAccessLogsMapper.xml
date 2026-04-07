@@ -17,7 +17,8 @@
           AND tl.gid = #{gid}
           AND tl.del_flag = '0'
           AND tl.enable_status = '0'
-          AND tlal.create_time BETWEEN #{startDate} and #{endDate}
+          AND tlal.create_time >= #{startDate}
+          AND tlal.create_time &lt; #{endDate}
         GROUP BY
             tlal.full_short_url, tl.gid;
     </select>
@@ -25,7 +26,7 @@
         SELECT
         tlal.user,
         CASE
-        WHEN MIN(tlal.create_time) BETWEEN #{arg3} AND #{arg4} THEN '新访客'
+        WHEN MIN(tlal.create_time) >= #{arg3} AND MIN(tlal.create_time) &lt; #{arg4} THEN '新访客'
         ELSE '老访客'
         END AS uvType
         FROM

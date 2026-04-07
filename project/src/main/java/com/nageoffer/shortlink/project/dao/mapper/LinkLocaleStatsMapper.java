@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
@@ -26,7 +25,8 @@ public interface LinkLocaleStatsMapper extends BaseMapper<LinkLocaleStatsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlls.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlls.date >= #{startDate} " +
+            "    AND tlls.date < #{endDate} " +
             "GROUP BY " +
             "    tlls.full_short_url, tl.gid, tlls.province;")
     List<LinkLocaleStatsDO> listLocaleByShortLink( ShortLinkStatsReqDTO requestParam);
@@ -44,7 +44,8 @@ public interface LinkLocaleStatsMapper extends BaseMapper<LinkLocaleStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlls.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlls.date >= #{startDate} " +
+            "    AND tlls.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlls.province;")
     List<LinkLocaleStatsDO> listLocaleByGroup( ShortLinkGroupStatsReqDTO requestParam);

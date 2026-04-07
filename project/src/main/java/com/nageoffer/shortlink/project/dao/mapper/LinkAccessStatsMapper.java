@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.shortlink.project.dao.entity.LinkAccessStatsDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
@@ -30,7 +29,8 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlas.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlas.date >= #{startDate} " +
+            "    AND tlas.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlas.date;")
     List<LinkAccessStatsDO> listStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);
@@ -49,7 +49,8 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = #{enableStatus} " +
-            "    AND tlas.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlas.date >= #{startDate} " +
+            "    AND tlas.date < #{endDate} " +
             "GROUP BY " +
             "    tlas.full_short_url, tl.gid, tlas.hour;")
     List<LinkAccessStatsDO> listHourStatsByShortLink( ShortLinkStatsReqDTO requestParam);
@@ -67,7 +68,8 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlas.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlas.date >= #{startDate} " +
+            "    AND tlas.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlas.hour;")
     List<LinkAccessStatsDO> listHourStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);
@@ -86,7 +88,8 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = #{enableStatus} " +
-            "    AND tlas.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlas.date >= #{startDate} " +
+            "    AND tlas.date < #{endDate} " +
             "GROUP BY " +
             "    tlas.full_short_url, tl.gid, tlas.weekday;")
     List<LinkAccessStatsDO> listWeekdayStatsByShortLink( ShortLinkStatsReqDTO requestParam);
@@ -104,7 +107,8 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlas.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlas.date >= #{startDate} " +
+            "    AND tlas.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlas.weekday;")
     List<LinkAccessStatsDO> listWeekdayStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);

@@ -18,7 +18,7 @@ public class ShortLinkBlockHandler {
     public static Result restoreUrlFallback( String shortUri,
                                          HttpServletRequest request,
                                          HttpServletResponse response,
-                                         BlockException ex) {
+                                         Throwable ex) {
         return Result.fail("服务繁忙，请稍后重试");
     }
 

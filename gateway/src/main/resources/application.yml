@@ -7,7 +7,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8849  # 你的 Nacos 服务端口（不是控制台 8080）
+        server-addr: 127.0.0.1:8848  # 你的 Nacos 服务端口（不是控制台 8080）
     gateway:
       routes:
         # 路由到 shortlink-admin 服务（你截图里的 admin 服务）
@@ -28,12 +28,12 @@ spring:
     # Sentinel 核心配置
     sentinel:
       transport:
-        dashboard: 127.0.0.1:8081 # Sentinel 控制台地址
+        dashboard: 127.0.0.1:8858 # Sentinel 控制台地址
         port: 8719 # 客户端和控制台通信端口（默认8719，冲突可改）
       eager: true # 启动时主动连接控制台（避免首次请求才初始化）
   data:
     redis:
-      host: 192.168.100.152
+      host: 127.0.0.1
       port: 6379
       password: 123456
       database: 0

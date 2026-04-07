@@ -2,7 +2,7 @@ package com.nageoffer.shortlink.project.Comsumer;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.*;
@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 短链接监控数据消费者（异步处理入库）
@@ -30,7 +31,7 @@ import java.util.Objects;
 @RocketMQMessageListener(
         topic = "short-link-stats-topic", // 和生产者发送的主题一致
         consumerGroup = "short-link-stats-consumer-group",
-        consumeThreadNumber = 5
+        consumeThreadNumber = 8
 )
 public class ShortLinkStatsConsumer implements RocketMQListener<String> {
 
@@ -48,6 +49,7 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void onMessage(String messageStr) {
+        String idempotentKey = null;
         try {
             String jsonStr;
             String cleanMsg = messageStr.replaceAll("^\"|\"$", "");
@@ -60,6 +62,15 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
                 jsonStr = messageStr;
             }
             ShortLinkStatsMessageDTO msg = JSON.parseObject(jsonStr, ShortLinkStatsMessageDTO.class);
+            String eventId = msg.getEventId();
+            if (StringUtils.isNotBlank(eventId)) {
+                idempotentKey = "mq:shortlink:stats:dedup:" + eventId;
+            }
+            if (StringUtils.isNotBlank(idempotentKey)
+                    && Boolean.FALSE.equals(stringRedisTemplate.opsForValue().setIfAbsent(idempotentKey, "-", 30, TimeUnit.MINUTES))) {
+                log.warn("{}消息重复消费拦截",eventId);
+                return;
+            }
             String gid = msg.getGid();
             if (gid == null) {
                 ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(Wrappers.lambdaQuery(ShortLinkGotoDO.class)
@@ -167,8 +178,12 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
             linkAccessLogsMapper.insert(accessLogs);
 
             log.info("监控数据入库成功，fullShortUrl:{}", msg.getFullShortUrl());
-        }catch (Exception e){
-            log.warn("数据入库失败:{}",e.getMessage());
+        } catch (Exception e) {
+            if (StringUtils.isNotBlank(idempotentKey)) {
+                stringRedisTemplate.delete(idempotentKey);
+            }
+            log.error("数据入库失败，触发重试。message={}", messageStr, e);
+            throw new RuntimeException("短链接统计消息消费失败，触发重试", e);
         }
     }
 }

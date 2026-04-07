@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.shortlink.project.dao.entity.LinkDeviceStatsDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.apache.ibatis.annotations.Select;
 import java.util.List;
 
@@ -28,7 +27,8 @@ public interface LinkDeviceStatsMapper extends BaseMapper<LinkDeviceStatsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = #{enableStatus} " +
-            "    AND tlds.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlds.date >= #{startDate} " +
+            "    AND tlds.date < #{endDate} " +
             "GROUP BY " +
             "    tlds.full_short_url, tl.gid, tlds.device;")
     List<LinkDeviceStatsDO> listDeviceStatsByShortLink( ShortLinkStatsReqDTO requestParam);
@@ -46,7 +46,8 @@ public interface LinkDeviceStatsMapper extends BaseMapper<LinkDeviceStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlds.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlds.date >= #{startDate} " +
+            "    AND tlds.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlds.device;")
     List<LinkDeviceStatsDO> listDeviceStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);

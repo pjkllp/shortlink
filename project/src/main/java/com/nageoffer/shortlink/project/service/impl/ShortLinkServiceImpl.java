@@ -7,7 +7,6 @@ import cn.hutool.core.text.StrBuilder;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -33,7 +32,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.jsoup.Jsoup;
@@ -221,18 +219,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
             ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
-            statsExecutor.submit(()->{
-                sendLinkStatsMessage(fullShortUrl,null,statsMsg);
-            });
+            statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, null, statsMsg));
             response.sendRedirect(originalUrl);
             return;
         }
         //布隆过滤器可能误判，导致请求一直打到数据库，需要再加一层缓存空值
+        //布隆过滤器不存在就一定不存在，但是如果不小心把布隆过滤器数据删了，不就页面一直不存在了吗
         boolean contains = shortLinkCreateCachePenetrationBloomFilter.contains(shortUri);
         if(!contains){
             response.sendRedirect("/page/notfound");
             return;
         }
+        //防止缓存穿透
         String gotoShortLinkIsnull = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_IS_NULL, fullShortUrl));
         if(StrUtil.isNotBlank(gotoShortLinkIsnull)){
             response.sendRedirect("/page/notfound");
@@ -241,15 +239,13 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK, fullShortUrl));
         boolean locked = false;
         try {
-            locked = lock.tryLock(3,10, TimeUnit.SECONDS);
+            locked = lock.tryLock(3, TimeUnit.SECONDS);
             //没有获取到锁就进入兜底
             if(!locked){
                 originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
                 if (StrUtil.isNotBlank(originalUrl)){
                     ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
-                    statsExecutor.submit(()->{
-                        sendLinkStatsMessage(fullShortUrl,null,statsMsg);
-                    });
+                    statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, null, statsMsg));
                     response.sendRedirect(originalUrl);
                     return;
                 }
@@ -259,9 +255,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)){
                 ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
-                statsExecutor.submit(()->{
-                    sendLinkStatsMessage(fullShortUrl,null,statsMsg);
-                });
+                statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, null, statsMsg));
                 response.sendRedirect(originalUrl);
                 return;
             }
@@ -290,9 +284,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                                 ,ShortLinkUtil.getValidDate(shortLinkDO.getValidData())
                                 ,TimeUnit.MILLISECONDS);
             ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
-            statsExecutor.submit(()->{
-                sendLinkStatsMessage(fullShortUrl,shortLinkDO.getGid(),statsMsg);
-            });
+            statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, shortLinkDO.getGid(), statsMsg));
             response.sendRedirect(shortLinkDO.getOriginUrl());
         }finally {
             if (locked) { // 只判断是否成功拿到过锁，无需手动判断线程持有
@@ -319,7 +311,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 String uvValue = uvCookie.get().getValue();
                 uv.set(uvValue);
                 Long added = stringRedisTemplate.opsForSet().add("short_link_uv_stats", fullShortUrl + uvValue);
-                isNewUv.set(added != null && added > 0); // 修正：added>0才是新UV（原代码>1错误）
+                isNewUv.set(added != null && added > 0);
             } else {
                 // 无UV Cookie：生成+设置（主线程同步执行）
                 String newUv = UUID.randomUUID().toString();
@@ -356,26 +348,23 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     // 新增：收集监控数据并发送消息
     private void sendLinkStatsMessage(String fullShortUrl, String gid,ShortLinkStatsMessageDTO statsMsg) {
-
         Date date=new Date();
         statsMsg.setFullShortUrl(fullShortUrl)
                 .setGid(gid)
                 .setAccessTime(date)
                 .setWeekday(DateUtil.dayOfWeekEnum(date).getValue())
-                .setHour(DateUtil.hour(date, true));
-        // 发送到专门的监控主题（short-link-stats-topic）
-        String jsonString = JSON.toJSONString(statsMsg);
-        rocketMQTemplate.asyncSend("short-link-stats-topic", jsonString, new SendCallback() {
-            @Override
-            public void onSuccess(SendResult sendResult) {
-                log.info("监控消息发送成功，fullShortUrl:{}", fullShortUrl);
-            }
+                .setHour(DateUtil.hour(date, true))
+                .setEventId(UUID.randomUUID().toString());
 
-            @Override
-            public void onException(Throwable e) {
-                log.error("监控消息发送失败，fullShortUrl:{}", fullShortUrl, e);
-            }
-        });
+        String jsonString = JSON.toJSONString(statsMsg);
+        try {
+            // 发送重试由 RocketMQ 客户端参数 retry-times-when-send-failed 统一控制
+            SendResult sendResult = rocketMQTemplate.syncSend("short-link-stats-topic", jsonString, 3000);
+            log.info("监控消息发送成功，fullShortUrl:{} result:{}", fullShortUrl, sendResult.getSendStatus());
+        } catch (Exception ex) {
+            log.error("监控消息发送失败，fullShortUrl:{}", fullShortUrl, ex);
+            throw new ServiceException("监控消息发送失败");
+        }
     }
 
     private void doLinkStats(String fullShortUrl,String gid,HttpServletRequest request,HttpServletResponse response){

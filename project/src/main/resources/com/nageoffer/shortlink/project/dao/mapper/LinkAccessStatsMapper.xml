@@ -52,7 +52,8 @@
             tlas.full_short_url = #{fullShortUrl}
           AND tl.gid = #{gid}
           AND tl.del_flag = '0'
-          AND tlas.date BETWEEN #{startDate} AND #{endDate}
+          AND tlas.date >= #{startDate}
+          AND tlas.date &lt; #{endDate}
         GROUP BY
             tlas.full_short_url, tl.gid, tlas.date;
     </select>

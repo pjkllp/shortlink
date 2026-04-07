@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.nageoffer.shortlink.project.dao.entity.LinkOsStatsDO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkGroupStatsReqDTO;
 import com.nageoffer.shortlink.project.dto.Req.ShortLinkStatsReqDTO;
-import io.lettuce.core.dynamic.annotation.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -27,7 +26,8 @@ public interface LinkOsStatsMapper extends BaseMapper<LinkOsStatsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = #{enableStatus} " +
-            "    AND tlos.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlos.date >= #{startDate} " +
+            "    AND tlos.date < #{endDate} " +
             "GROUP BY " +
             "    tlos.full_short_url, tl.gid, tlos.os;")
     List<HashMap<String, Object>> listOsStatsByShortLink( ShortLinkStatsReqDTO requestParam);
@@ -45,7 +45,8 @@ public interface LinkOsStatsMapper extends BaseMapper<LinkOsStatsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlos.date BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlos.date >= #{startDate} " +
+            "    AND tlos.date < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlos.os;")
     List<HashMap<String, Object>> listOsStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);

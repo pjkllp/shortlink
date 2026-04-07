@@ -60,8 +60,10 @@ public class ShortLinkController {
 
     @SentinelResource(
             value = "short-link-goto-link",
+            //熔断降级
             blockHandlerClass = ShortLinkBlockHandler.class,
             blockHandler = "blockHandlerRestoreUrl",
+            //异常兜底
             fallback = "restoreUrlFallback",
             fallbackClass = ShortLinkBlockHandler.class
     )

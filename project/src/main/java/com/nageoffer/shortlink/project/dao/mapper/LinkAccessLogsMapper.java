@@ -32,7 +32,8 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "    AND tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = #{enableStatus} " +
-            "    AND tlal.create_time BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlal.create_time >= #{startDate} " +
+            "    AND tlal.create_time < #{endDate} " +
             "GROUP BY " +
             "    tlal.full_short_url, tl.gid, tlal.ip " +
             "ORDER BY " +
@@ -53,7 +54,8 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlal.create_time BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlal.create_time >= #{startDate} " +
+            "    AND tlal.create_time < #{endDate} " +
             "GROUP BY " +
             "    tl.gid, tlal.ip " +
             "ORDER BY " +
@@ -70,7 +72,7 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "FROM ( " +
             "    SELECT " +
             "        CASE WHEN COUNT(DISTINCT DATE(tlal.create_time)) > 1 THEN 1 ELSE 0 END AS old_user, " +
-            "        CASE WHEN COUNT(DISTINCT DATE(tlal.create_time)) = 1 AND MAX(tlal.create_time) >= #{startDate} AND MAX(tlal.create_time) <= #{endDate} THEN 1 ELSE 0 END AS new_user " +
+            "        CASE WHEN COUNT(DISTINCT DATE(tlal.create_time)) = 1 AND MAX(tlal.create_time) >= #{startDate} AND MAX(tlal.create_time) < #{endDate} THEN 1 ELSE 0 END AS new_user " +
             "    FROM " +
             "        t_link tl INNER JOIN " +
             "        t_link_access_logs tlal ON tl.full_short_url = tlal.full_short_url " +
@@ -146,7 +148,8 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlal.create_time BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlal.create_time >= #{startDate} " +
+            "    AND tlal.create_time < #{endDate} " +
             "GROUP BY " +
             "    tl.gid;")
     LinkAccessStatsDO findPvUvUidStatsByGroup( ShortLinkGroupStatsReqDTO requestParam);
@@ -160,7 +163,8 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "    tl.gid = #{gid} " +
             "    AND tl.del_flag = '0' " +
             "    AND tl.enable_status = '0' " +
-            "    AND tlal.create_time BETWEEN #{startDate} and #{endDate} " +
+            "    AND tlal.create_time >= #{startDate} " +
+            "    AND tlal.create_time < #{endDate} " +
             "ORDER BY " +
             "    tlal.create_time DESC")
     IPage<LinkAccessLogsDO> selectGroupPage( ShortLinkGroupStatsAccessRecordReqDTO requestParam);

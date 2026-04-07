@@ -34,4 +34,6 @@ public class ShortLinkStatsMessageDTO {
     private Date accessTime;
     private int hour;
     private int weekday;
+    //业务唯一id，用来防止幂等
+    private String eventId;
 }
