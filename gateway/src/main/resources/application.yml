@@ -1,6 +1,9 @@
 server:
   port: 8000  # 网关端口，用户访问这个端口
-
+  tomcat:
+    threads:
+      max: 8  # 最大线程数，默认200，改成800
+      min-spare: 2  # 最小空闲线程数
 spring:
   application:
     name: shortlink-gateway  # 网关在 Nacos 里的服务名
@@ -10,7 +13,7 @@ spring:
         server-addr: 127.0.0.1:8848  # 你的 Nacos 服务端口（不是控制台 8080）
     gateway:
       routes:
-        # 路由到 shortlink-admin 服务（你截图里的 admin 服务）
+        # 路由到 shortlink-admin 服务
         - id: shortlink-admin
           uri: lb://shortlink-admin  # lb:// 代表负载均衡，从 Nacos 找服务
           predicates:
@@ -37,3 +40,10 @@ spring:
       port: 6379
       password: 123456
       database: 0
+      # 2核4G服务器Redis连接池配置（Lettuce）
+      lettuce:
+        pool:
+          max-active: 12          # 最大连接数：Tomcat线程数+4=12
+          max-idle: 8             # 最大空闲连接：8
+          min-idle: 2             # 最小空闲连接：2
+          max-wait: 3000ms        # 连接等待超时：3秒

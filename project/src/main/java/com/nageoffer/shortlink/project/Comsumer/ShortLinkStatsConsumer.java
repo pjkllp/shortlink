@@ -31,7 +31,8 @@ import java.util.concurrent.TimeUnit;
 @RocketMQMessageListener(
         topic = "short-link-stats-topic", // 和生产者发送的主题一致
         consumerGroup = "short-link-stats-consumer-group",
-        consumeThreadNumber = 8
+        consumeThreadNumber = 4,
+        consumeThreadMax = 8
 )
 public class ShortLinkStatsConsumer implements RocketMQListener<String> {
 
@@ -50,6 +51,7 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
     @Override
     public void onMessage(String messageStr) {
         String idempotentKey = null;
+        String eventId = null;
         try {
             String jsonStr;
             String cleanMsg = messageStr.replaceAll("^\"|\"$", "");
@@ -62,7 +64,7 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
                 jsonStr = messageStr;
             }
             ShortLinkStatsMessageDTO msg = JSON.parseObject(jsonStr, ShortLinkStatsMessageDTO.class);
-            String eventId = msg.getEventId();
+            eventId = msg.getEventId();
             if (StringUtils.isNotBlank(eventId)) {
                 idempotentKey = "mq:shortlink:stats:dedup:" + eventId;
             }
