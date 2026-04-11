@@ -4,11 +4,12 @@ import com.alibaba.fastjson.support.spring.messaging.MappingFastJsonMessageConve
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.converter.MappingJackson2MessageConverter;
 
 @Configuration
+@ConditionalOnProperty(prefix = "stats.mq", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class RocketMQConfig {
 
     @Value("${rocketmq.name-server}")

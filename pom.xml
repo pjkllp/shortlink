@@ -8,18 +8,6 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <description>
-        🔥热门推荐🔥SaaS 短链接系统，承载高并发和海量存储等场景难题。专为实习、校招以及社招而出的最新项目，项目质量不亚于12306铁路购票项目。
-    </description>
-
-    <developers>
-        <developer>
-            <name>马丁</name>
-            <email>machen@apache.org</email>
-            <url>https://github.com/magestacks</url>
-            <organization>Apache and openGoofy</organization>
-        </developer>
-    </developers>
     <modules>
         <module>admin</module>
         <module>project</module>
@@ -45,17 +33,14 @@
         <spotless-maven-plugin.version>2.22.1</spotless-maven-plugin.version>
     </properties>
 
-<!--    <modules>-->
-<!--        <module>admin</module>-->
-<!--        <module>aggregation</module>-->
-<!--        <module>project</module>-->
-<!--        <module>gateway</module>-->
-<!--    </modules>-->
-
     <dependencies>
+        <!-- 修复 LOMBOK -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <version>1.18.30</version>
+            <scope>provided</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
@@ -101,11 +86,6 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
 
-            <dependency>
-                <groupId>org.apache.shardingsphere</groupId>
-                <artifactId>shardingsphere-jdbc-core</artifactId>
-                <version>${shardingsphere.version}</version>
-            </dependency>
 
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
@@ -146,14 +126,49 @@
     </dependencyManagement>
 
     <build>
+        <pluginManagement>
+            <plugins>
+                <!-- SPRINGBOOT 打包插件（必须加！） -->
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <version>${spring-boot.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>repackage</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.6.1</version>
+                <version>3.8.1</version>
                 <configuration>
                     <source>17</source>
                     <target>17</target>
+                    <encoding>UTF-8</encoding>
+                    <annotationProcessorPaths>
+                        <!-- 强制开启 LOMBOK 注解编译 -->
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>1.18.30</version>
+                        </path>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
 
@@ -163,23 +178,8 @@
                 <version>${spotless-maven-plugin.version}</version>
                 <configuration>
                     <java>
-                        <!--<eclipse>
-                            <file>${maven.multiModuleProjectDirectory}/format/short-link_spotless_formatter.xml</file>
-                        </eclipse>-->
-<!--                        <licenseHeader>-->
-<!--                            &lt;!&ndash; ${maven.multiModuleProjectDirectory} 爆红属于正常，并不影响编译或者运行，忽略就好 &ndash;&gt;-->
-<!--                            <file>${maven.multiModuleProjectDirectory}/format/license-header</file>-->
-<!--                        </licenseHeader>-->
                     </java>
                 </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>apply</goal>
-                        </goals>
-                        <phase>compile</phase>
-                    </execution>
-                </executions>
             </plugin>
         </plugins>
     </build>

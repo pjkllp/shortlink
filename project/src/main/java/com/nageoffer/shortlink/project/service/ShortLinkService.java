@@ -22,7 +22,7 @@ public interface ShortLinkService extends IService<ShortLinkDO>{
      * @param requestParam 短链接创建请求参数
      * @return 短链接创建响应参数
      */
-    ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) throws IOException;
+    ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam,HttpServletRequest request,HttpServletResponse response) throws IOException;
 
     /**
      * 分页查询短链接

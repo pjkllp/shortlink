@@ -40,9 +40,12 @@ import org.jsoup.select.Elements;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.connection.stream.RecordId;
+import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +67,7 @@ import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*
 @RequiredArgsConstructor
 @Slf4j
 public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
+    private static final String STATS_STREAM_KEY = "short-link-stats-stream";
 
     private final RBloomFilter<String> shortLinkCreateCachePenetrationBloomFilter;
 
@@ -91,18 +95,28 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final LinkAccessLogsMapper linkAccessLogsMapper;
 
-    private final RocketMQTemplate rocketMQTemplate;
+    private final ObjectProvider<RocketMQTemplate> rocketMQTemplateProvider;
 
-    @Value("${short-link.domain.default}")
+    @Value("${stats.mq.enabled:true}")
+    private boolean statsMqEnabled;
+
+    @Value("${short-link.domain.default:pengwater.xin}")
     private String createShortLinkDefaultDomain;
     @Value("${short-link.protocol}")
     private String shortLinkProtocol;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam) throws IOException {
+    public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam,HttpServletRequest request,HttpServletResponse response) throws IOException {
         String shortLinkSuffix = generateSuffix(requestParam);
-        String fullShortUrl = StrBuilder.create(shortLinkProtocol)
+        String originUrl = requestParam.getOriginUrl();
+        String scheme=null;
+        if (originUrl.startsWith("https://")){
+            scheme="https";
+        }else {
+            throw new ClientException("此网站不安全");
+        }
+        String fullShortUrl = StrBuilder.create(scheme)
                 .append("://")
                 .append(createShortLinkDefaultDomain)
                 .append("/")
@@ -213,11 +227,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
-        String serverName = request.getServerName();
-        String scheme = request.getScheme();
-        String fullShortUrl=scheme+"://"+serverName+"/"+shortUri;
+        String fullShortUrl="https"+"://"+createShortLinkDefaultDomain+"/"+shortUri;
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
+        log.info("redis缓存获取原始链接：{}",originalUrl);
         if (StrUtil.isNotBlank(originalUrl)) {
+            log.info("redis缓存不为空，准备跳转原始链接:{}",originalUrl);
             ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
             statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, null, statsMsg));
             response.sendRedirect(originalUrl);
@@ -227,12 +241,14 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         //布隆过滤器不存在就一定不存在，但是如果不小心把布隆过滤器数据删了，不就页面一直不存在了吗
         boolean contains = shortLinkCreateCachePenetrationBloomFilter.contains(shortUri);
         if(!contains){
+            log.info("布隆过滤器中没用此短链接{}，返回not found",shortUri);
             response.sendRedirect("/page/notfound");
             return;
         }
         //防止缓存穿透
         String gotoShortLinkIsnull = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_IS_NULL, fullShortUrl));
         if(StrUtil.isNotBlank(gotoShortLinkIsnull)){
+            log.info("缓存穿透生效，穿透短链接为:{}",shortUri);
             response.sendRedirect("/page/notfound");
             return;
         }
@@ -240,6 +256,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         boolean locked = false;
         try {
             locked = lock.tryLock(3, TimeUnit.SECONDS);
+            log.warn("短链接{}缓存可能失效，进入分布式锁兜底",shortUri);
             //没有获取到锁就进入兜底
             if(!locked){
                 originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
@@ -254,6 +271,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             //获取到锁了之后也可能是前一个获取到锁的线程在三秒内查询数据库添加缓存，释放了锁让我们抢到了
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)){
+                log.info("{}分布式锁兜底成功，缓存重新生效",shortUri);
                 ShortLinkStatsMessageDTO statsMsg = setUv(fullShortUrl, request, response);
                 statsExecutor.execute(() -> sendLinkStatsMessage(fullShortUrl, null, statsMsg));
                 response.sendRedirect(originalUrl);
@@ -357,12 +375,39 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .setEventId(UUID.randomUUID().toString());
 
         String jsonString = JSON.toJSONString(statsMsg);
+        if (!statsMqEnabled) {
+            writeStatsToRedisStream(fullShortUrl, statsMsg, jsonString);
+            return;
+        }
+        RocketMQTemplate rocketMQTemplate = rocketMQTemplateProvider.getIfAvailable();
+        if (rocketMQTemplate == null) {
+            log.warn("stats.mq.enabled=true 但未发现 RocketMQTemplate，降级写入 Redis Stream，fullShortUrl:{}", fullShortUrl);
+            writeStatsToRedisStream(fullShortUrl, statsMsg, jsonString);
+            return;
+        }
         try {
             // 发送重试由 RocketMQ 客户端参数 retry-times-when-send-failed 统一控制
             SendResult sendResult = rocketMQTemplate.syncSend("short-link-stats-topic", jsonString, 3000);
             log.info("监控消息发送成功，fullShortUrl:{} result:{}", fullShortUrl, sendResult.getSendStatus());
         } catch (Exception ex) {
             log.error("监控消息发送失败，fullShortUrl:{}", fullShortUrl, ex);
+            writeStatsToRedisStream(fullShortUrl, statsMsg, jsonString);
+        }
+    }
+
+    private void writeStatsToRedisStream(String fullShortUrl, ShortLinkStatsMessageDTO statsMsg, String jsonString) {
+        try {
+            RecordId recordId = stringRedisTemplate.opsForStream().add(
+                    StreamRecords.string(
+                            Map.of(
+                                    "payload", jsonString,
+                                    "eventId", StrUtil.blankToDefault(statsMsg.getEventId(), "")
+                            )
+                    ).withStreamKey(STATS_STREAM_KEY)
+            );
+            log.warn("降级写入Redis Stream成功，fullShortUrl:{} recordId:{}", fullShortUrl, recordId);
+        } catch (Exception streamEx) {
+            log.error("写入Redis Stream失败，fullShortUrl:{}", fullShortUrl, streamEx);
             throw new ServiceException("监控消息发送失败");
         }
     }

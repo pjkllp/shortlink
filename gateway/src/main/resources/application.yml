@@ -10,9 +10,17 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848  # 你的 Nacos 服务端口（不是控制台 8080）
+        server-addr: 127.0.0.1:8848
+        ip: 127.0.0.1
+        register-enabled: false  # gateway 不需要注册到 Nacos，减少启动失败风险
     gateway:
       routes:
+        # 短链接直跳：/abc123 -> shortlink-project
+        - id: shortlink-redirect
+          uri: lb://shortlink-project
+          predicates:
+            - Path=/{short-uri}
+
         # 路由到 shortlink-admin 服务
         - id: shortlink-admin
           uri: lb://shortlink-admin  # lb:// 代表负载均衡，从 Nacos 找服务

@@ -36,6 +36,10 @@ spring:
     nacos:
       discovery:
         server-addr: 127.0.0.1:8848
+        fail-fast: false
+        ip: 127.0.0.1
+        heartbeat-interval: 10000
+        heartbeat-timeout: 20000
   mvc:
     view:
       prefix: /templates/
@@ -43,7 +47,9 @@ spring:
 short-link:
   protocol: http
   domain:
-    default: nurl.local
+    default: pengwater.xin
+#    default: nurl.local
+
 gaode:
   amap:
     key: c2a69289fa819a2e36b6e467c82d692c
@@ -57,4 +63,10 @@ rocketmq:
   consumer:
     group: default-consumer-group  # 消费者组名，自定义
     enable-msg-trace: true
-
+stats:
+  mq:
+    enabled: false
+logging:
+  level:
+    ShardingSphere-SQL: ERROR
+    com.alibaba.shardingsphere.sql: ERROR

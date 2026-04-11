@@ -12,8 +12,6 @@ import com.nageoffer.shortlink.project.toolkit.AmapIpUtil;
 import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
-import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,13 +26,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@RocketMQMessageListener(
-        topic = "short-link-stats-topic", // 和生产者发送的主题一致
-        consumerGroup = "short-link-stats-consumer-group",
-        consumeThreadNumber = 4,
-        consumeThreadMax = 8
-)
-public class ShortLinkStatsConsumer implements RocketMQListener<String> {
+public class ShortLinkStatsConsumer {
 
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
@@ -48,7 +40,6 @@ public class ShortLinkStatsConsumer implements RocketMQListener<String> {
     private final ShortLinkGotoMapper shortLinkGotoMapper;
 
     @Transactional(rollbackFor = Exception.class)
-    @Override
     public void onMessage(String messageStr) {
         String idempotentKey = null;
         String eventId = null;

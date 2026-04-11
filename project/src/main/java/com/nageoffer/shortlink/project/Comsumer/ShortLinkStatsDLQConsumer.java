@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.util.Date;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "stats.mq", name = "enabled", havingValue = "true", matchIfMissing = true)
 @RocketMQMessageListener(
         topic = "%DLQ%short-link-stats-consumer-group",
         consumerGroup = "short-link-stats-DLQ-consumer-group",
