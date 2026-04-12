@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,7 +27,8 @@ public class ScheduledServiceImpl implements ScheduledService {
 
     @Scheduled(fixedDelay = 30000)
     @Override
-    public void ClearDLQ() {
+    @Transactional(rollbackFor = Exception.class,propagation = Propagation.NOT_SUPPORTED)
+    public void replayFailedMessages() {
         LambdaQueryWrapper<DlqMessageDO> queryWrapper = Wrappers.lambdaQuery(DlqMessageDO.class)
                 .eq(DlqMessageDO::getStatus, 0)
                 .le(DlqMessageDO::getRetryCount, 2);
@@ -46,7 +49,7 @@ public class ScheduledServiceImpl implements ScheduledService {
                 int retry = item.getRetryCount() + 1;
                 DlqMessageDO dlqMessageDO = DlqMessageDO.builder()
                         .retryCount(retry)
-                        .errorMessage(e.getMessage().length()>1000? e.getMessage().substring(0,1000): e.getMessage())
+                        .errorMessage(e.getMessage()!=null&&e.getMessage().length()>1000? e.getMessage().substring(0,1000): e.getMessage())
                         .status(retry >= 3 ? 2 : 0)
                         .build();
                 dlqMessageMapper.update(dlqMessageDO,updateWrapper);
