@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: shortlink-gateway  # 网关在 Nacos 里的服务名
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
   cloud:
     nacos:
       discovery:

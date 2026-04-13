@@ -34,4 +34,9 @@ public class UserRespDTO {
      */
     private String mail;
 
+    /**
+     * 是否管理员：1=是，0=否
+     */
+    private Integer isAdmin;
+
 }

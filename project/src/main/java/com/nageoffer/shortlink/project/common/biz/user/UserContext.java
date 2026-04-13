@@ -51,6 +51,14 @@ public final class UserContext {
     }
 
     /**
+     * 是否管理员：无上下文或非管理员时返回 0
+     */
+    public static Integer getIsAdmin() {
+        UserInfo userInfo = USER_THREAD_LOCAL.get();
+        return Optional.ofNullable(userInfo).map(UserInfo::getIsAdmin).orElse(0);
+    }
+
+    /**
      * 清理用户上下文
      */
     public static void removeUser() {

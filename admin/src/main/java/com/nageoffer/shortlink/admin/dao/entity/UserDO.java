@@ -67,4 +67,9 @@ public class UserDO{
      */
     @TableField(fill = FieldFill.INSERT)
     private Integer delFlag;
+
+    /**
+     * 是否管理员：1=是，0=否（注册默认普通用户）
+     */
+    private Integer isAdmin;
 }

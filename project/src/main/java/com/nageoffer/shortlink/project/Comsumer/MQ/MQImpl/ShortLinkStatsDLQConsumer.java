@@ -1,4 +1,4 @@
-package com.nageoffer.shortlink.project.Comsumer;
+package com.nageoffer.shortlink.project.Comsumer.MQ.MQImpl;
 
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;

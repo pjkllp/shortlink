@@ -97,12 +97,13 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     private final ObjectProvider<RocketMQTemplate> rocketMQTemplateProvider;
 
-    @Value("${stats.mq.enabled:true}")
+    @Value("${stats.mq.enabled:false}")
     private boolean statsMqEnabled;
 
     @Value("${short-link.domain.default:pengwater.xin}")
+//    @Value("${short-link.domain.default:nurl.local}")
     private String createShortLinkDefaultDomain;
-    @Value("${short-link.protocol}")
+    @Value("${short-link.protocol:https}")
     private String shortLinkProtocol;
 
     @Transactional(rollbackFor = Exception.class)
@@ -407,7 +408,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             );
             log.warn("降级写入Redis Stream成功，fullShortUrl:{} recordId:{}", fullShortUrl, recordId);
         } catch (Exception streamEx) {
-            log.error("写入Redis Stream失败，fullShortUrl:{}", fullShortUrl, streamEx);
+            log.error("写入Redis Stream失败，失败的完整消息:{},失败原因:{}", jsonString, streamEx.getMessage());
             throw new ServiceException("监控消息发送失败");
         }
     }

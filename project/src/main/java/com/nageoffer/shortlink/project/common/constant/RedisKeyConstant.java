@@ -19,4 +19,9 @@ public class RedisKeyConstant {
      */
     public final static String GOTO_SHORT_LINK_IS_NULL="short_link_goto_isnull_%s";
 
+    /**
+     * 访问日志的流的key
+     */
+    public final static String ACCESS_LOG_STREAM="access_log_stream:";
+
 }

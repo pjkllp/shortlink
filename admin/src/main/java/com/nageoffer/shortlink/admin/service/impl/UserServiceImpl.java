@@ -51,7 +51,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         boolean isLock = lock.tryLock();
         try {
             if (isLock){
-                int insert = baseMapper.insert(BeanUtil.toBean(requestParam, UserDO.class));
+                UserDO userDO = BeanUtil.toBean(requestParam, UserDO.class);
+                userDO.setIsAdmin(0);
+                int insert = baseMapper.insert(userDO);
                 if(insert<0){
                     throw new ClientException(UserErrorCode.USER_SAVE_ERROR);
                 }
@@ -91,6 +93,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         String token = JwtUtil.generateJwt(userDO.getUsername());
         stringRedisTemplate.opsForValue().set(Constant.USER_LOGIN+userDO.getUsername(),token,30, TimeUnit.MINUTES);
+        String isAdminFlag = (userDO.getIsAdmin() != null && userDO.getIsAdmin() == 1) ? "1" : "0";
+        stringRedisTemplate.opsForValue().set(Constant.USER_IS_ADMIN + userDO.getUsername(), isAdminFlag, 30, TimeUnit.MINUTES);
         return BeanUtil.toBean(userDO,UserLoginRespDTO.class).setToken(token);
     }
 
@@ -111,5 +115,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new ClientException(UserErrorCode.USER_DATA_ERROR);
         }
         stringRedisTemplate.delete(Constant.USER_LOGIN+username);
+        stringRedisTemplate.delete(Constant.USER_IS_ADMIN + username);
     }
 }

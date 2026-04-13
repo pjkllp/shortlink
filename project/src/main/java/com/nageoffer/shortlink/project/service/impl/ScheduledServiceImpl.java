@@ -1,10 +1,9 @@
 package com.nageoffer.shortlink.project.service.impl;
 
-import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.nageoffer.shortlink.project.Comsumer.ShortLinkStatsConsumer;
+import com.nageoffer.shortlink.project.Comsumer.doMessage;
 import com.nageoffer.shortlink.project.dao.entity.*;
 import com.nageoffer.shortlink.project.dao.mapper.*;
 import com.nageoffer.shortlink.project.service.ScheduledService;
@@ -23,7 +22,7 @@ import java.util.List;
 public class ScheduledServiceImpl implements ScheduledService {
 
     private final DlqMessageMapper dlqMessageMapper;
-    private final ShortLinkStatsConsumer shortLinkStatsConsumer;
+    private final doMessage doMessage;
 
     @Scheduled(fixedDelay = 30000)
     @Override
@@ -35,7 +34,7 @@ public class ScheduledServiceImpl implements ScheduledService {
         List<DlqMessageDO> dlqMessageDOS = dlqMessageMapper.selectList(queryWrapper);
         for(DlqMessageDO item:dlqMessageDOS){
             try {
-                shortLinkStatsConsumer.onMessage(item.getMessageStr());
+                doMessage.onMessage(item.getMessageStr());
                 LambdaUpdateWrapper<DlqMessageDO> updateWrapper = Wrappers.lambdaUpdate(DlqMessageDO.class)
                         .eq(DlqMessageDO::getDlqTopic, item.getDlqTopic())
                         .eq(DlqMessageDO::getEventId, item.getEventId())
@@ -57,4 +56,6 @@ public class ScheduledServiceImpl implements ScheduledService {
             }
         }
     }
+
+
 }

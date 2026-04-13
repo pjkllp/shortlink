@@ -7,6 +7,11 @@ server:
 spring:
   application:
     name: shortlink-project
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
     url: jdbc:shardingsphere:classpath:shardingsphere-config.yaml
@@ -45,7 +50,7 @@ spring:
       prefix: /templates/
       suffix: .html
 short-link:
-  protocol: http
+  protocol: https
   domain:
     default: pengwater.xin
 #    default: nurl.local

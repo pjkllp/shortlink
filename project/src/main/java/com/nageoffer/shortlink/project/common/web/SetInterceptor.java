@@ -13,7 +13,12 @@ public class SetInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String username = request.getHeader("username");
-        UserContext.setUser(UserInfo.builder().username(username).build());
+        String isAdminHeader = request.getHeader("isAdmin");
+        Integer isAdmin = 0;
+        if ("1".equals(isAdminHeader)) {
+            isAdmin = 1;
+        }
+        UserContext.setUser(UserInfo.builder().username(username).isAdmin(isAdmin).build());
         return true;
     }
 

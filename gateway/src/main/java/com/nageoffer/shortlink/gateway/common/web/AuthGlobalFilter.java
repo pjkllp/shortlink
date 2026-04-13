@@ -79,7 +79,15 @@ public class AuthGlobalFilter implements WebFilter {
             return writeUnauthorizedResponse(response, "用户未登录");
         }
 
-        ServerHttpRequest newRequest = request.mutate().header("username", username).build();
+        String isAdmin = stringRedisTemplate.opsForValue().get(Constant.USER_IS_ADMIN + username);
+        if (isAdmin == null || isAdmin.isEmpty()) {
+            isAdmin = "0";
+        }
+
+        ServerHttpRequest newRequest = request.mutate()
+                .header("username", username)
+                .header("isAdmin", isAdmin)
+                .build();
         ServerWebExchange newExchange = exchange.mutate().request(newRequest).build();
         return chain.filter(newExchange);
     }

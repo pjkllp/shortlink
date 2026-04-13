@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ShortLinkStatsConsumer {
+public class doMessage {
 
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
@@ -38,6 +38,7 @@ public class ShortLinkStatsConsumer {
     private final StringRedisTemplate stringRedisTemplate;
     private final AmapIpUtil amapIpUtil;
     private final ShortLinkGotoMapper shortLinkGotoMapper;
+    private final AccessLogMapper accessLogMapper;
 
     @Transactional(rollbackFor = Exception.class)
     public void onMessage(String messageStr) {
@@ -178,5 +179,31 @@ public class ShortLinkStatsConsumer {
             log.error("数据入库失败，触发重试。message={}", messageStr, e);
             throw new RuntimeException("短链接统计消息消费失败，触发重试", e);
         }
+    }
+
+    public void recordAccessLog(String messageStr){
+        String jsonStr;
+        String cleanMsg = messageStr.replaceAll("^\"|\"$", "");
+        try {
+            byte[] decodeBytes = Base64.getDecoder().decode(cleanMsg);
+            jsonStr = new String(decodeBytes);
+        } catch (IllegalArgumentException e) {
+            jsonStr = messageStr;
+        }
+        AccessLogDO accessLogDO = JSON.parseObject(jsonStr, AccessLogDO.class);
+        String city=null;
+        String province=null;
+        try {
+            AmapIpLocationResult locationByIp = amapIpUtil.getLocationByIp(accessLogDO.getIp());
+            if (locationByIp != null) {
+                city = StrUtil.isBlank(locationByIp.getCity()) || Objects.equals(locationByIp.getCity(), "[]") ? "未知" : locationByIp.getCity();
+                province = StrUtil.isBlank(locationByIp.getProvince()) || Objects.equals(locationByIp.getProvince(), "[]") ? "未知" : locationByIp.getProvince();
+            }
+        } catch (Exception e) {
+            log.warn("高德地图定位失败:{}", e.getMessage());
+        }
+        accessLogDO.setProvince(province);
+        accessLogDO.setCity(city);
+        accessLogMapper.insert(accessLogDO);
     }
 }

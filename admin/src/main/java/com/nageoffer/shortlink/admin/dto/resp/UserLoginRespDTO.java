@@ -15,4 +15,9 @@ public class UserLoginRespDTO {
      * Jwt令牌
      */
     private String token;
+
+    /**
+     * 是否管理员：1=是，0=否
+     */
+    private Integer isAdmin;
 }
