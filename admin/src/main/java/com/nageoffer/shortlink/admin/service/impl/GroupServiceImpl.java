@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
+import com.nageoffer.shortlink.admin.common.exceptions.ClientException;
 import com.nageoffer.shortlink.admin.dao.entity.GroupDO;
 import com.nageoffer.shortlink.admin.dao.mapper.GroupMapper;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
@@ -25,10 +26,12 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
+    private static final int USER_MAX_GROUP_COUNT = 3;
 
     private final ShortLinkActualRemoteService shortLinkActualRemoteService;
     @Override
     public void saveGroup(String groupName) {
+        validateGroupQuota(UserContext.getUsername());
         GroupDO groupDO = GroupDO.builder()
                 .gid(generateGroupName())
                 .sortOrder(0)
@@ -40,6 +43,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     public void saveGroup(String username, String groupMame) {
+        validateGroupQuota(username);
         GroupDO groupDO = GroupDO.builder()
                 .gid(generateGroupName(username))
                 .sortOrder(0)
@@ -123,5 +127,15 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
         }while (groupDO!=null);
         return groupId;
+    }
+
+    private void validateGroupQuota(String username) {
+        LambdaQueryWrapper<GroupDO> countWrapper = Wrappers.lambdaQuery(GroupDO.class)
+                .eq(GroupDO::getUsername, username)
+                .eq(GroupDO::getDelFlag, 0);
+        Long groupCount = baseMapper.selectCount(countWrapper);
+        if (groupCount != null && groupCount >= USER_MAX_GROUP_COUNT) {
+            throw new ClientException("每个用户最多只能创建3个分组");
+        }
     }
 }

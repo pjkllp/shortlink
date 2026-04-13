@@ -17,7 +17,7 @@ public class SentinelParamRuleConfig {
         ParamFlowRule rule = new ParamFlowRule("short-link-create")  // 资源名和@SentinelResource一致
                 .setParamIdx(0)  // 对第0个参数（userId）限流
                 .setGrade(RuleConstant.FLOW_GRADE_QPS)  // 按QPS限流
-                .setCount(1)  // 同一个userId每秒最多5次请求
+                .setCount(1)
                 .setDurationInSec(1);  // 统计窗口1秒
 
         // 2. 加载规则到Sentinel

@@ -40,6 +40,7 @@ public class AuthGlobalFilter implements WebFilter {
     private static final Pattern WHITE_LIST_PATTERN = Pattern.compile(
             "^/api/short-link/admin/v1/user/[^/]+$" +
                     "|^/api/short-link/admin/v1/has_username/?$" +
+                    "|^/api/short-link/admin/v1/getCode$" +
                     "|^/api/short-link/admin/v1/user$" +
                     "|^/api/short-link/admin/v1/login$" +
                     "|^/api/short-link/admin/v1/logout$" +

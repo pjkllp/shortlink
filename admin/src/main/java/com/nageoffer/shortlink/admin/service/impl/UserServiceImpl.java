@@ -1,22 +1,24 @@
 package com.nageoffer.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.shortlink.admin.common.biz.user.UserContext;
 import com.nageoffer.shortlink.admin.common.constant.Constant;
 import com.nageoffer.shortlink.admin.common.constant.RedisCacheConstant;
+import com.nageoffer.shortlink.admin.common.convention.result.Result;
 import com.nageoffer.shortlink.admin.common.enums.UserErrorCode;
 import com.nageoffer.shortlink.admin.common.exceptions.ClientException;
+import com.nageoffer.shortlink.admin.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.admin.dao.entity.UserDO;
 import com.nageoffer.shortlink.admin.dao.mapper.UserMapper;
-import com.nageoffer.shortlink.admin.dto.req.UserLoginReqDTO;
-import com.nageoffer.shortlink.admin.dto.req.UserLogoutReqDTO;
-import com.nageoffer.shortlink.admin.dto.req.UserRegisterReqDTO;
-import com.nageoffer.shortlink.admin.dto.req.UserUpdateReqDTO;
+import com.nageoffer.shortlink.admin.dto.req.*;
 import com.nageoffer.shortlink.admin.dto.resp.UserLoginRespDTO;
 import com.nageoffer.shortlink.admin.dto.resp.UserRespDTO;
+import com.nageoffer.shortlink.admin.service.EmailService;
 import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.service.UserService;
 import com.nageoffer.shortlink.admin.toolkit.JwtUtil;
@@ -27,7 +29,10 @@ import org.redisson.api.RedissonClient;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.rmi.server.ServerCloneException;
 import java.util.concurrent.TimeUnit;
+
+import static com.nageoffer.shortlink.admin.service.impl.EmailServiceImpl.USER_REVISE_CODE_KEY;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +41,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     private final RedissonClient redissonClient;
     private final StringRedisTemplate stringRedisTemplate;
     private final GroupService groupService;
+    private final EmailService emailService;
 
     @Override
     public Boolean hasUsername(String username) {
@@ -44,15 +50,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
 
     @Override
     public void Register(UserRegisterReqDTO requestParam) {
+        notEmpty(requestParam);
         if(hasUsername(requestParam.getUsername())){
             throw new ClientException(UserErrorCode.USER_EXIST);
         }
+        notExists(requestParam);
         RLock lock = redissonClient.getLock(RedisCacheConstant.LOCK_USER_REGISTER_KEY+requestParam.getUsername());
         boolean isLock = lock.tryLock();
         try {
             if (isLock){
                 UserDO userDO = BeanUtil.toBean(requestParam, UserDO.class);
                 userDO.setIsAdmin(0);
+                if(StrUtil.isNotBlank(requestParam.getInvitationCode())
+                        && requestParam.getInvitationCode().equals(stringRedisTemplate.opsForValue().get("invitation_code_key"))){
+                    userDO.setIsAdmin(1);
+                }
                 int insert = baseMapper.insert(userDO);
                 if(insert<0){
                     throw new ClientException(UserErrorCode.USER_SAVE_ERROR);
@@ -64,6 +76,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             }
         }finally {
             lock.unlock();
+        }
+    }
+
+    private void notEmpty(UserRegisterReqDTO requestParam){
+        if (requestParam == null
+                || StrUtil.isBlank(requestParam.getUsername())
+                || StrUtil.isBlank(requestParam.getPassword())
+                || StrUtil.isBlank(requestParam.getMail())
+        ) {
+            throw new ClientException("所有注册参数均不能为空");
         }
     }
 
@@ -99,14 +121,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     }
 
     @Override
-    public void update(UserUpdateReqDTO requestParam) {
-        //TODO 验证当前登录用户是否为登录用户
-        LambdaUpdateWrapper<UserDO> updateWrapper = Wrappers.lambdaUpdate(UserDO.class)
-                .eq(UserDO::getUsername, requestParam.getUsername());
-        baseMapper.update(BeanUtil.toBean(requestParam,UserDO.class),updateWrapper);
-    }
-
-    @Override
     public void logout(UserLogoutReqDTO requestParam) {
         String username = requestParam.getUsername();
         String token = requestParam.getToken();
@@ -116,5 +130,76 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         }
         stringRedisTemplate.delete(Constant.USER_LOGIN+username);
         stringRedisTemplate.delete(Constant.USER_IS_ADMIN + username);
+    }
+
+    @Override
+    public void getCode(UserRegisterReqDTO request) {
+        notEmpty(request);
+        notExists(request);
+        emailService.sendEmail(request);
+    }
+
+    @Override
+    public void getReviseCode(UserReviseReqDTO request) {
+        if (request.getMail().isBlank()||request.getPassword().isBlank()){
+            throw new ClientException("请将信息填写完整");
+        }
+        String username = UserContext.getUsername();
+        LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
+                .eq(UserDO::getUsername, username);
+        UserDO userDO = baseMapper.selectOne(queryWrapper);
+        if(username.isBlank()||!userDO.getUsername().equals(username)){
+            throw new ClientException("你的身份非法");
+        }
+        RLock lock = redissonClient.getLock("user_revise_key");
+        boolean isLocked = lock.tryLock();
+        if (!isLocked){
+            throw new ClientException("请勿频繁操作");
+        }
+        try{
+            if(!userDO.getMail().equals(request.getMail())){
+                throw new ClientException("您的邮箱输入错误！");
+            }
+            emailService.sendReviseMail(request.getMail());
+        }finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void revise(UserReviseReqDTO request) {
+        String username = UserContext.getUsername();
+        LambdaQueryWrapper<UserDO> queryWrapper = Wrappers.lambdaQuery(UserDO.class)
+                .eq(UserDO::getUsername, username);
+        UserDO userDO = baseMapper.selectOne(queryWrapper);
+        if(username.isBlank()
+                ||!userDO.getUsername().equals(username)
+                ||request.getMail().equals(userDO.getMail())){
+            throw new ClientException("你的身份非法");
+        }
+        if (!request.getCode().equals(stringRedisTemplate.opsForValue().get(String.format(USER_REVISE_CODE_KEY,request.getMail())))){
+            throw new ClientException("验证码错误");
+        }
+        LambdaUpdateWrapper<UserDO> eq = Wrappers.lambdaUpdate(UserDO.class)
+                .set(UserDO::getPassword,request.getPassword())
+                .eq(UserDO::getUsername, username);
+        int update = baseMapper.update(eq);
+        if (update<1){
+            throw new ServiceException("密码更新失败");
+        }
+    }
+
+    private void notExists(UserRegisterReqDTO request){
+        LambdaQueryWrapper<UserDO> eq = Wrappers.lambdaQuery(UserDO.class)
+                .eq(UserDO::getUsername,request.getUsername())
+                .or().eq(UserDO::getMail, request.getMail());
+        UserDO userDO = baseMapper.selectOne(eq);
+        if(userDO!=null){
+            if (userDO.getUsername().equals(request.getUsername())) {
+                throw new ClientException("用户名已存在！");
+            }else {
+                throw new ClientException("密码已存在！");
+            }
+        }
     }
 }

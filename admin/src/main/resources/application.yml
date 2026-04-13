@@ -51,3 +51,17 @@ spring:
           max-idle: 8             # 最大空闲连接：8
           min-idle: 2             # 最小空闲连接：2
           max-wait: 3000ms        # 连接等待超时：3秒
+  # 邮件发送配置（核心）
+  mail:
+    host: smtp.qq.com       # QQ 邮箱 SMTP 服务器地址
+    port: 587               # 端口（587 是 TLS 加密端口，推荐使用）
+    username: 2797857024@qq.com # 你的 QQ 邮箱账号（发件人邮箱）
+    password: hsjyuvevaqqlddbh  # 你的 QQ 邮箱授权码（不是登录密码！）
+    default-encoding: UTF-8 # 编码格式
+    properties:
+      mail:
+        smtp:
+          auth: true        # 开启认证
+          starttls:
+            enable: true    # 开启 TLS 加密
+            required: true  # 强制使用 TLS 加密

@@ -1,7 +1,6 @@
-package com.nageoffer.shortlink.project.dao.entity;
+package com.nageoffer.shortlink.project.dto;
 
-import com.baomidou.mybatisplus.annotation.*;
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,13 +16,11 @@ import java.util.Date;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("t_access_log")
-public class AccessLogDO {
+public class AccessLogStream {
 
     /**
      * 请求ID
      */
-    @TableId(type = IdType.ASSIGN_ID)
     private Long id;
 
     /**
@@ -62,24 +59,14 @@ public class AccessLogDO {
     private String os;
 
     /**
-     * 访问时间（入库为时刻；接口 JSON 固定东八区字符串，与 MyBatis 映射无关）
+     * 访问时间
      */
+    @JSONField(format = "yyyy-MM-dd HH:mm:ss")
     private Date accessTime;
-
-    /** 
-     * 省份
-    */
-    private String province;
-
-    /** 
-     * 城市
-     */
-    private String city;
 
     /**
      * 创建时间
      */
-    @TableField(value = "create_time", fill = FieldFill.INSERT) // 插入时自动填充
     private Date createTime;
 
     /**

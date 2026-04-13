@@ -35,6 +35,10 @@
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
         <!-- 1. JWT 核心接口（compile 范围，编译时需要） -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>

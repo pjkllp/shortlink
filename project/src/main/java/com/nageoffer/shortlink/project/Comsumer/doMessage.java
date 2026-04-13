@@ -1,12 +1,16 @@
 package com.nageoffer.shortlink.project.Comsumer;
 
+import cn.hutool.Hutool;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.*;
 import com.nageoffer.shortlink.project.dao.mapper.*;
+import com.nageoffer.shortlink.project.dto.AccessLogStream;
 import com.nageoffer.shortlink.project.dto.ShortLinkStatsMessageDTO;
 import com.nageoffer.shortlink.project.toolkit.AmapIpUtil;
 import com.nageoffer.shortlink.project.toolkit.DO.AmapIpLocationResult;
@@ -190,7 +194,8 @@ public class doMessage {
         } catch (IllegalArgumentException e) {
             jsonStr = messageStr;
         }
-        AccessLogDO accessLogDO = JSON.parseObject(jsonStr, AccessLogDO.class);
+        AccessLogStream accessLogStream = JSON.parseObject(jsonStr, AccessLogStream.class);
+        AccessLogDO accessLogDO = BeanUtil.toBean(accessLogStream, AccessLogDO.class);
         String city=null;
         String province=null;
         try {

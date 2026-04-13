@@ -31,4 +31,14 @@ public class UserRegisterReqDTO {
      * 邮箱
      */
     private String mail;
+
+    /**
+     * 验证码
+     */
+    private String code;
+
+    /**
+     * 邀请码
+     */
+    private String invitationCode;
 }

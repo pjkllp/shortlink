@@ -2,5 +2,7 @@ package com.nageoffer.shortlink.project.service;
 
 public interface ScheduledService {
 
-    public void replayFailedMessages();
+    void replayFailedMessages();
+
+    void trimRedisStreams();
 }

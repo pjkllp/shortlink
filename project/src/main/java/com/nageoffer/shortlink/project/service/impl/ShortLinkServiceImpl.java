@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
+import com.nageoffer.shortlink.project.common.biz.user.UserContext;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
 import com.nageoffer.shortlink.project.common.exceptions.ServiceException;
 import com.nageoffer.shortlink.project.dao.entity.*;
@@ -68,6 +69,7 @@ import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*
 @Slf4j
 public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
     private static final String STATS_STREAM_KEY = "short-link-stats-stream";
+    private static final int USER_MAX_SHORT_LINK_COUNT = 10;
 
     private final RBloomFilter<String> shortLinkCreateCachePenetrationBloomFilter;
 
@@ -94,6 +96,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
 
     private final LinkAccessLogsMapper linkAccessLogsMapper;
+    private final LinkGroupMapper linkGroupMapper;
 
     private final ObjectProvider<RocketMQTemplate> rocketMQTemplateProvider;
 
@@ -109,6 +112,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO requestParam,HttpServletRequest request,HttpServletResponse response) throws IOException {
+        validateUserShortLinkQuota();
         String shortLinkSuffix = generateSuffix(requestParam);
         String originUrl = requestParam.getOriginUrl();
         String scheme=null;
@@ -154,6 +158,31 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .fullShortUrl(shortLinkDO.getFullShortUrl())
                 .originUrl(requestParam.getOriginUrl())
                 .build();
+    }
+
+    private void validateUserShortLinkQuota() {
+        String username = UserContext.getUsername();
+        if (StrUtil.isBlank(username)) {
+            throw new ClientException("用户未登录");
+        }
+        List<GroupDO> userGroups = linkGroupMapper.selectList(
+                Wrappers.lambdaQuery(GroupDO.class)
+                        .eq(GroupDO::getUsername, username)
+                        .eq(GroupDO::getDelFlag, false)
+        );
+        if (userGroups == null || userGroups.isEmpty()) {
+            return;
+        }
+        List<String> gidList = userGroups.stream().map(GroupDO::getGid).toList();
+        Long shortLinkCount = shortLinkMapper.selectCount(
+                Wrappers.lambdaQuery(ShortLinkDO.class)
+                        .in(ShortLinkDO::getGid, gidList)
+                        // 包含回收站（enable_status=1），只排除永久删除（del_flag=1）
+                        .eq(ShortLinkDO::getDelFlag, 0)
+        );
+        if (shortLinkCount != null && shortLinkCount >= USER_MAX_SHORT_LINK_COUNT) {
+            throw new ClientException("每个用户最多只能创建10条短链接（包含回收站）");
+        }
     }
 
     @Override
@@ -336,7 +365,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 String newUv = UUID.randomUUID().toString();
                 uv.set(newUv);
                 Cookie cookie = new Cookie("short_uv", newUv);
-                cookie.setDomain(request.getServerName());
+                // 使用 host-only cookie，避免域名/IP/子域不一致导致浏览器拒收或不回传
                 cookie.setPath("/");
                 cookie.setMaxAge(365 * 24 * 60 * 60);
                 response.addCookie(cookie); // 主线程执行，安全
@@ -347,7 +376,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             String newUv = UUID.randomUUID().toString();
             uv.set(newUv);
             Cookie cookie = new Cookie("short_uv", newUv);
-            cookie.setDomain(request.getServerName());
+            // 使用 host-only cookie，避免域名/IP/子域不一致导致浏览器拒收或不回传
             cookie.setPath("/");
             cookie.setMaxAge(365 * 24 * 60 * 60);
             response.addCookie(cookie); // 主线程执行，安全
@@ -428,8 +457,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         Runnable runnable=()-> {
             uv.set(UUID.randomUUID().toString());
             Cookie cookie = new Cookie("short_uv",uv.get());
-            cookie.setDomain(request.getServerName());
-            cookie.setPath(request.getRequestURL().substring(1));
+            // 使用 host-only cookie + 根路径，保证整个站点请求都能稳定回传同一 UV
+            cookie.setPath("/");
             cookie.setMaxAge(365 * 24 * 60 * 60);
             stringRedisTemplate.opsForSet().add("short_link_uv_stats",
                     fullShortUrl + uv.get());
