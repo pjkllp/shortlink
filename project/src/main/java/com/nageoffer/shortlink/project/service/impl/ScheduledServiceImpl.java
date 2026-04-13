@@ -9,14 +9,15 @@ import com.nageoffer.shortlink.project.dao.mapper.*;
 import com.nageoffer.shortlink.project.service.ScheduledService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnection;
+import org.redisson.api.RStream;
+import org.redisson.api.RedissonClient;
+import org.redisson.api.stream.StreamTrimArgs;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -26,12 +27,13 @@ public class ScheduledServiceImpl implements ScheduledService {
 
     private static final String ACCESS_LOG_STREAM_KEY = "access_log_stream:";
     private static final String STATS_STREAM_KEY = "short-link-stats-stream";
-    private static final long ACCESS_LOG_STREAM_MAX_LEN = 50000L;
-    private static final long STATS_STREAM_MAX_LEN = 10000L;
+    private static final int ACCESS_LOG_STREAM_MAX_LEN = 50000;
+    private static final int STATS_STREAM_MAX_LEN = 10000;
 
     private final DlqMessageMapper dlqMessageMapper;
     private final doMessage doMessage;
     private final StringRedisTemplate stringRedisTemplate;
+    private final RedissonClient redissonClient;
 
     @Scheduled(fixedDelay = 30000)
     @Override
@@ -84,20 +86,10 @@ public class ScheduledServiceImpl implements ScheduledService {
     /**
      * 执行 XTRIM key MAXLEN ~ N（近似裁剪）.
      */
-    private Long trimStreamApprox(String streamKey, long maxLen) {
-        return stringRedisTemplate.execute((RedisConnection connection) -> {
-            Object result = connection.execute(
-                    "XTRIM",
-                    streamKey.getBytes(StandardCharsets.UTF_8),
-                    "MAXLEN".getBytes(StandardCharsets.UTF_8),
-                    "~".getBytes(StandardCharsets.UTF_8),
-                    String.valueOf(maxLen).getBytes(StandardCharsets.UTF_8)
-            );
-            if (result instanceof Long) {
-                return (Long) result;
-            }
-            return null;
-        });
+    private Long trimStreamApprox(String streamKey, int maxLen) {
+        RStream<String, String> stream = redissonClient.getStream(streamKey);
+        stream.trimNonStrict(StreamTrimArgs.maxLen(maxLen).noLimit());
+        return stream.size();
     }
 
 
