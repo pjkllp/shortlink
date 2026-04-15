@@ -43,10 +43,12 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.connection.stream.RecordId;
 import org.springframework.data.redis.connection.stream.StreamRecords;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.nageoffer.shortlink.project.Comsumer.Stream.StreamImpl.ShortLinkStatsStreamConsumer.STATS_STREAM_GROUP;
 import static com.nageoffer.shortlink.project.common.constant.RedisKeyConstant.*;
 
 /**
@@ -425,6 +428,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }
     }
 
+    private final RedisScript<Void> script=RedisScript.of(
+            new ClassPathResource("/lua/zaddSream.lua")
+    );
+    public final String QPS_ZSET_KEY="qps_zset_key";
+
     private void writeStatsToRedisStream(String fullShortUrl, ShortLinkStatsMessageDTO statsMsg, String jsonString) {
         try {
             RecordId recordId = stringRedisTemplate.opsForStream().add(
@@ -435,6 +443,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                             )
                     ).withStreamKey(STATS_STREAM_KEY)
             );
+            //统计流的qps，动态的执行流的trim
+            stringRedisTemplate.execute(script,List.of(QPS_ZSET_KEY));
             log.warn("降级写入Redis Stream成功，fullShortUrl:{} recordId:{}", fullShortUrl, recordId);
         } catch (Exception streamEx) {
             log.error("写入Redis Stream失败，失败的完整消息:{},失败原因:{}", jsonString, streamEx.getMessage());

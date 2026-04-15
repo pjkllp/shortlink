@@ -9,7 +9,6 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableDiscoveryClient
 @MapperScan("com.nageoffer.shortlink.project.dao.mapper")
-@EnableScheduling
 public class ShortLinkApplication {
     public static void main(String[] args) {
         SpringApplication.run(ShortLinkApplication.class,args);

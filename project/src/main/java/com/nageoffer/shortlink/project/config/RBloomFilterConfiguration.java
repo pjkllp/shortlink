@@ -12,7 +12,7 @@ public class RBloomFilterConfiguration {
     public RBloomFilter<String> shortLinkCreateCachePenetrationBloomFilter(RedissonClient redissonClient){
         RBloomFilter<String> cachePenetrationBloomFilter=redissonClient.getBloomFilter("shortLinkCreateCachePenetrationBloomFilter");
         //预计存多少数据，误判率
-        cachePenetrationBloomFilter.tryInit(100000000L,0.001);
+        cachePenetrationBloomFilter.tryInit(1000000L,0.001);
         return cachePenetrationBloomFilter;
     }
 }

@@ -27,8 +27,9 @@ public class ScheduledServiceImpl implements ScheduledService {
 
     private static final String ACCESS_LOG_STREAM_KEY = "access_log_stream:";
     private static final String STATS_STREAM_KEY = "short-link-stats-stream";
-    private static final int ACCESS_LOG_STREAM_MAX_LEN = 50000;
-    private static final int STATS_STREAM_MAX_LEN = 10000;
+    private static final int ACCESS_LOG_STREAM_MAX_LEN = 3000;
+    private static final int STATS_STREAM_MAX_LEN = 5000;
+    private static int trimRate=300000;
 
     private final DlqMessageMapper dlqMessageMapper;
     private final doMessage doMessage;
@@ -71,7 +72,6 @@ public class ScheduledServiceImpl implements ScheduledService {
     /**
      * 定期裁剪 Redis Stream，防止消息无限增长挤占内存。
      */
-    @Scheduled(fixedDelay = 300000)
     public void trimRedisStreams() {
         try {
             Long accessSize = trimStreamApprox(ACCESS_LOG_STREAM_KEY, ACCESS_LOG_STREAM_MAX_LEN);
