@@ -16,8 +16,10 @@ public class InterceptorConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // 短链跳转 GET /{short-uri}：单段路径，用 /* 排除（不是 /**，否则会误伤多级路径）
         registry.addInterceptor(setInterceptor)
-                .addPathPatterns("/**");
+                .addPathPatterns("/**")
+                .excludePathPatterns("/*");
         registry.addInterceptor(adminAccessInterceptor)
                 .addPathPatterns("/api/short-link/project/v1/monitor/**");
     }

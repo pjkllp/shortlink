@@ -208,6 +208,48 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void updateShortLink(ShortLinkUpdateReqDTO requestParam) {
+        if (StrUtil.hasBlank(
+                requestParam.getFullShortUrl(),
+                requestParam.getOriginGid(),
+                requestParam.getGid(),
+                requestParam.getOriginUrl()
+        )) {
+            throw new ClientException("修改参数不完整");
+        }
+        if (!requestParam.getOriginUrl().startsWith("https://")) {
+            throw new ClientException("此网站不安全");
+        }
+        if (!Objects.equals(requestParam.getValidDataType(), ValidDataTypeEnum.PERMANENT.getType())
+                && !Objects.equals(requestParam.getValidDataType(), ValidDataTypeEnum.CUSTOM.getType())) {
+            throw new ClientException("有效期类型非法");
+        }
+        if (Objects.equals(requestParam.getValidDataType(), ValidDataTypeEnum.CUSTOM.getType())
+                && (requestParam.getValidData() == null || !requestParam.getValidData().after(new Date()))) {
+            throw new ClientException("自定义有效期必须大于当前时间");
+        }
+        String username = UserContext.getUsername();
+        if (StrUtil.isBlank(username)) {
+            throw new ClientException("用户未登录");
+        }
+        GroupDO originGroup = linkGroupMapper.selectOne(Wrappers.lambdaQuery(GroupDO.class)
+                .eq(GroupDO::getUsername, username)
+                .eq(GroupDO::getGid, requestParam.getOriginGid())
+                .eq(GroupDO::getDelFlag, false));
+        if (originGroup == null) {
+            throw new ClientException("原分组不存在或无权限");
+        }
+        if (!Objects.equals(requestParam.getOriginGid(), requestParam.getGid())) {
+            GroupDO targetGroup = linkGroupMapper.selectOne(Wrappers.lambdaQuery(GroupDO.class)
+                    .eq(GroupDO::getUsername, username)
+                    .eq(GroupDO::getGid, requestParam.getGid())
+                    .eq(GroupDO::getDelFlag, false));
+            if (targetGroup == null) {
+                throw new ClientException("目标分组不存在或无权限");
+            }
+        }
+        Date targetValidDate = Objects.equals(requestParam.getValidDataType(), ValidDataTypeEnum.PERMANENT.getType())
+                ? null
+                : requestParam.getValidData();
         LambdaQueryWrapper<ShortLinkDO> queryWrapper = Wrappers.lambdaQuery(ShortLinkDO.class)
                 .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
                 .eq(ShortLinkDO::getGid, requestParam.getOriginGid())
@@ -218,42 +260,29 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             throw new ClientException("短链接不存在");
         }
         if(Objects.equals(hasShortLinkDO.getGid(),requestParam.getGid())){
-            LambdaUpdateWrapper<ShortLinkDO> updateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
-                    .eq(ShortLinkDO::getGid, requestParam.getGid())
-                    .eq(ShortLinkDO::getDelFlag, 0)
-                    .eq(ShortLinkDO::getEnableStatus, 0)
-                    .set(Objects.equals(requestParam.getValidDataType(), ValidDataTypeEnum.PERMANENT.getType()), ShortLinkDO::getValidData, null);
-            ShortLinkDO shortLinkDO = ShortLinkDO.builder()
-                    .createdType(hasShortLinkDO.getCreatedType())
-                    .originUrl(requestParam.getOriginUrl())
-                    .description(requestParam.getDescription())
-                    .validDataType(requestParam.getValidDataType())
-                    .validData(requestParam.getValidData())
-                    .build();
-            baseMapper.update(shortLinkDO, updateWrapper);
+            requestParam.setValidData(targetValidDate);
+            baseMapper.updateShortLink(requestParam);
         }else{
-            LambdaUpdateWrapper<ShortLinkDO> linkUpdateWrapper = Wrappers.lambdaUpdate(ShortLinkDO.class)
-                    .eq(ShortLinkDO::getFullShortUrl, requestParam.getFullShortUrl())
-                    .eq(ShortLinkDO::getGid, hasShortLinkDO.getGid())
-                    .eq(ShortLinkDO::getDelFlag, 0)
-                    .eq(ShortLinkDO::getEnableStatus, 0)
-                    .set(ShortLinkDO::getDelFlag, 1);
-            baseMapper.update(linkUpdateWrapper);
-            ShortLinkDO shortLinkDO = ShortLinkDO.builder()
-                    .domain(hasShortLinkDO.getDomain())
-                    .originUrl(requestParam.getOriginUrl())
-                    .gid(requestParam.getGid())
-                    .createdType(hasShortLinkDO.getCreatedType())
-                    .validDataType(requestParam.getValidDataType())
-                    .validData(requestParam.getValidData())
-                    .description(requestParam.getDescription())
-                    .shortUri(hasShortLinkDO.getShortUri())
-                    .enableStatus(hasShortLinkDO.getEnableStatus())
-                    .fullShortUrl(hasShortLinkDO.getFullShortUrl())
-                    .build();
-            baseMapper.insert(shortLinkDO);
+            //goto表有分片键，如果只更改gid，hash算法的下的分片可能会找不到数据，所以先删再重新插入，更新hash
+            baseMapper.deleteById(hasShortLinkDO.getId());
+            hasShortLinkDO.setId(null)
+                    .setGid(requestParam.getGid())
+                    .setOriginUrl(requestParam.getOriginUrl())
+                    .setDescription(requestParam.getDescription() != null ? requestParam.getDescription() : hasShortLinkDO.getDescription())
+                    .setValidDataType(requestParam.getValidDataType())
+                    .setValidData(targetValidDate)
+                    .setUpdateTime(null);
+            baseMapper.insert(hasShortLinkDO);
+
+            //如果更新了分组id，就必须更新这个goto
+            LambdaUpdateWrapper<ShortLinkGotoDO> eq = Wrappers.lambdaUpdate(ShortLinkGotoDO.class)
+                    .eq(ShortLinkGotoDO::getFullShortUrl, requestParam.getFullShortUrl());
+            ShortLinkGotoDO build = ShortLinkGotoDO.builder().gid(requestParam.getGid()).build();
+            shortLinkGotoMapper.update(build,eq);
         }
+        // 防止改完后缓存仍然存原值，统一清理跳转缓存与空值缓存
+        stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY, requestParam.getFullShortUrl()));
+        stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_IS_NULL, requestParam.getFullShortUrl()));
 
     }
     private final ExecutorService statsExecutor;
@@ -431,6 +460,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final RedisScript<Void> script=RedisScript.of(
             new ClassPathResource("/lua/zaddSream.lua")
     );
+
     public final String QPS_ZSET_KEY="qps_zset_key";
 
     private void writeStatsToRedisStream(String fullShortUrl, ShortLinkStatsMessageDTO statsMsg, String jsonString) {

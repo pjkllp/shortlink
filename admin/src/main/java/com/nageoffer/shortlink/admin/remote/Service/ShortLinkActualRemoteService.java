@@ -2,6 +2,11 @@ package com.nageoffer.shortlink.admin.remote.Service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.nageoffer.shortlink.admin.common.convention.result.Result;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupDeleteReq;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSaveReqDTO;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
+import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupUpdateReq;
+import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
 import com.nageoffer.shortlink.admin.dto.req.RecycleBinSaveReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.*;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.*;
@@ -30,6 +35,14 @@ public interface ShortLinkActualRemoteService {
      */
     @PostMapping("/api/short-link/project/v1/link")
     Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO requestParam);
+
+    /**
+     * 远程修改短链接
+     * @param requestParam 短链接修改请求
+     * @return 远程响应
+     */
+    @PutMapping("/api/short-link/project/v1/link")
+    Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO requestParam);
 
     /**
             * 短链接分页查询
@@ -94,4 +107,24 @@ public interface ShortLinkActualRemoteService {
      */
     @GetMapping("/api/short-link/project/v1/stats")
     Result<ShortLinkStatsRespDTO> stats(@SpringQueryMap ShortLinkStatsReqDTO requestParam);
+
+    @PostMapping("/api/short-link/project/v1/group")
+    Result<Void> saveGroup(@RequestBody ShortLinkGroupSaveReqDTO requestParam);
+
+    @GetMapping("/api/short-link/project/v1/group")
+    Result<List<ShortLinkGroupRespDTO>> listGroup();
+
+    @PutMapping("/api/short-link/project/v1/group")
+    Result<Void> updateGroup(@RequestBody ShortLinkGroupUpdateReq requestParam);
+
+    @DeleteMapping("/api/short-link/project/v1/group")
+    Result<Void> deleteGroup(@RequestBody ShortLinkGroupDeleteReq requestParam);
+
+    @PostMapping("/api/short-link/project/v1/group/sort")
+    Result<Void> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> requestParam);
+
+    @PostMapping("/api/short-link/project/v1/group/internal/create")
+    Result<Void> saveGroupForUsername(@RequestHeader("username") String username,
+                                      @RequestHeader("isAdmin") String isAdmin,
+                                      @RequestBody ShortLinkGroupSaveReqDTO requestParam);
 }

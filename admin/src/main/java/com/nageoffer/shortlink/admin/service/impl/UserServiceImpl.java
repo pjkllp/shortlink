@@ -18,8 +18,8 @@ import com.nageoffer.shortlink.admin.dao.mapper.UserMapper;
 import com.nageoffer.shortlink.admin.dto.req.*;
 import com.nageoffer.shortlink.admin.dto.resp.UserLoginRespDTO;
 import com.nageoffer.shortlink.admin.dto.resp.UserRespDTO;
+import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService;
 import com.nageoffer.shortlink.admin.service.EmailService;
-import com.nageoffer.shortlink.admin.service.GroupService;
 import com.nageoffer.shortlink.admin.service.UserService;
 import com.nageoffer.shortlink.admin.toolkit.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +40,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
     private final RBloomFilter userRegisterCachePenetrationBloomFilter;
     private final RedissonClient redissonClient;
     private final StringRedisTemplate stringRedisTemplate;
-    private final GroupService groupService;
+    private final ShortLinkActualRemoteService shortLinkActualRemoteService;
     private final EmailService emailService;
 
     @Override
@@ -70,7 +70,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
                     throw new ClientException(UserErrorCode.USER_SAVE_ERROR);
                 }
                 userRegisterCachePenetrationBloomFilter.add(requestParam.getUsername());
-                groupService.saveGroup(requestParam.getUsername(),"默认分组");
+                ShortLinkGroupSaveReqDTO saveReqDTO = new ShortLinkGroupSaveReqDTO();
+                saveReqDTO.setName("默认分组");
+                shortLinkActualRemoteService.saveGroupForUsername(requestParam.getUsername(), "0", saveReqDTO);
             }else {
                 throw new ClientException(UserErrorCode.USER_EXIST);
             }

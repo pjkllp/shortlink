@@ -6,9 +6,8 @@ import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSaveReqDTO;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupSortReqDTO;
 import com.nageoffer.shortlink.admin.dto.req.ShortLinkGroupUpdateReq;
 import com.nageoffer.shortlink.admin.dto.resp.ShortLinkGroupRespDTO;
-import com.nageoffer.shortlink.admin.service.GroupService;
+import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.annotations.Delete;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,7 +16,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class GroupController {
-    private final GroupService groupService;
+    private final ShortLinkActualRemoteService shortLinkActualRemoteService;
 
     /**
      * 新增短链接分组
@@ -26,8 +25,7 @@ public class GroupController {
      */
     @PostMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> save(@RequestBody ShortLinkGroupSaveReqDTO requestParam){
-        groupService.saveGroup(requestParam.getName());
-        return ResponseEntity.ok(Result.success("新建分组成功"));
+        return ResponseEntity.ok(shortLinkActualRemoteService.saveGroup(requestParam));
     }
 
     /**
@@ -36,18 +34,16 @@ public class GroupController {
      */
     @GetMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<List<ShortLinkGroupRespDTO>>> listGroup(){
-        return ResponseEntity.ok(Result.success("查询成功",groupService.listGroup()));
+        return ResponseEntity.ok(shortLinkActualRemoteService.listGroup());
     }
 
     /**
      * 修改短链接分组名称
-     * @param requestParam
-     * @return
+     * admin 仅做转发，实际校验与更新在 project 完成
      */
     @PutMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> update(@RequestBody ShortLinkGroupUpdateReq requestParam){
-        groupService.updateGroup(requestParam);
-        return ResponseEntity.ok(Result.success("修改成功"));
+        return ResponseEntity.ok(shortLinkActualRemoteService.updateGroup(requestParam));
     }
 
     /**
@@ -57,8 +53,7 @@ public class GroupController {
      */
     @DeleteMapping("/api/short-link/admin/v1/group")
     public ResponseEntity<Result<Void>> delete(@RequestBody ShortLinkGroupDeleteReq requestParam){
-        groupService.deleteGroup(requestParam.getGid());
-        return ResponseEntity.ok(Result.success("删除成功"));
+        return ResponseEntity.ok(shortLinkActualRemoteService.deleteGroup(requestParam));
     }
 
     /**
@@ -68,8 +63,7 @@ public class GroupController {
      */
     @PostMapping("/api/short-link/admin/v1/group/sort")
     public ResponseEntity<Result<Void>> sortGroup(@RequestBody List<ShortLinkGroupSortReqDTO> requestParam){
-        groupService.sortGroup(requestParam);
-        return ResponseEntity.ok(Result.success("排序成功"));
+        return ResponseEntity.ok(shortLinkActualRemoteService.sortGroup(requestParam));
     }
 
 

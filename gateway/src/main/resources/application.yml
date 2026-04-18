@@ -31,16 +31,13 @@ spring:
           uri: lb://shortlink-admin  # lb:// 代表负载均衡，从 Nacos 找服务
           predicates:
             - Path=/api/short-link/admin/**  # 匹配 admin 接口路径
-          filters:
-#            - StripPrefix=1  # 去掉 /api 前缀，转发给 admin 时变成 /short-link/admin/**
 
-        # 路由到 shortlink-project 服务（核心短链接服务）
-        - id: shortlink-project
+        # 仅保留监控接口到 shortlink-project，其余业务接口统一走 admin 转发
+        - id: shortlink-project-monitor
           uri: lb://shortlink-project
           predicates:
-            - Path=/api/short-link/project/**
-#          filters:
-#            - StripPrefix=1
+            - Path=/api/short-link/project/v1/monitor/**
+
     # Sentinel 核心配置
     sentinel:
       transport:

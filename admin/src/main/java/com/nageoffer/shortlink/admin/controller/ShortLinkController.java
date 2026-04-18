@@ -7,6 +7,7 @@ import com.nageoffer.shortlink.admin.handler.ShortLinkBlockHandler;
 import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkCreateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkPageReqDTO;
+import com.nageoffer.shortlink.admin.remote.dto.Req.ShortLinkUpdateReqDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkCreateRespDTO;
 import com.nageoffer.shortlink.admin.remote.dto.Resp.ShortLinkPageRespDTO;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +44,15 @@ public class ShortLinkController {
             @RequestBody ShortLinkCreateReqDTO requestParam
     ){
         return shortLinkActualRemoteService.createShortLink(requestParam);
+    }
+
+    /**
+     * 修改短链接
+     * @param requestParam 修改请求
+     * @return 响应结果
+     */
+    @PutMapping("/api/short-link/admin/v1/link")
+    public Result<Void> update(@RequestBody ShortLinkUpdateReqDTO requestParam){
+        return shortLinkActualRemoteService.updateShortLink(requestParam);
     }
 }
