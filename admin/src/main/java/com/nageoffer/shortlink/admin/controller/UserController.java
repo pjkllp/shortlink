@@ -78,6 +78,15 @@ public class UserController {
     }
 
     /**
+     * 刷新登录令牌接口
+     */
+    @PostMapping("/refreshLogin")
+    public Result<String> refreshLogin(@RequestBody UserRefreshReqDTO requestParam){
+        String token = userService.refreshLogin(requestParam);
+        return Result.success("刷新登录成功,重新发送登录请求",token);
+    }
+
+    /**
      * 修改用户密码
      * @param request
      * @return

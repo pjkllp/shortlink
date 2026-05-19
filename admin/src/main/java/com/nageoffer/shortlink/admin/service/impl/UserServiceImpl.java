@@ -22,6 +22,7 @@ import com.nageoffer.shortlink.admin.remote.Service.ShortLinkActualRemoteService
 import com.nageoffer.shortlink.admin.service.EmailService;
 import com.nageoffer.shortlink.admin.service.UserService;
 import com.nageoffer.shortlink.admin.toolkit.JwtUtil;
+import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 import java.rmi.server.ServerCloneException;
 import java.util.concurrent.TimeUnit;
 
+import static com.nageoffer.shortlink.admin.common.constant.Constant.USER_LOGIN_REFRESH;
 import static com.nageoffer.shortlink.admin.service.impl.EmailServiceImpl.USER_REVISE_CODE_KEY;
 
 @Service
@@ -116,10 +118,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
             throw new ClientException(UserErrorCode.USER_PASSWORD_ERROR);
         }
         String token = JwtUtil.generateJwt(userDO.getUsername());
+        String refreshToken = JwtUtil.generateRefreshToken(userDO.getUsername());
         stringRedisTemplate.opsForValue().set(Constant.USER_LOGIN+userDO.getUsername(),token,30, TimeUnit.MINUTES);
+        stringRedisTemplate.opsForValue().set(Constant.USER_LOGIN_REFRESH+userDO.getUsername(),refreshToken,3, TimeUnit.DAYS);
         String isAdminFlag = (userDO.getIsAdmin() != null && userDO.getIsAdmin() == 1) ? "1" : "0";
         stringRedisTemplate.opsForValue().set(Constant.USER_IS_ADMIN + userDO.getUsername(), isAdminFlag, 30, TimeUnit.MINUTES);
-        return BeanUtil.toBean(userDO,UserLoginRespDTO.class).setToken(token);
+        return BeanUtil.toBean(userDO,UserLoginRespDTO.class).setToken(token).setRefreshToken(refreshToken);
     }
 
     @Override
@@ -127,10 +131,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         String username = requestParam.getUsername();
         String token = requestParam.getToken();
         String redisToken = stringRedisTemplate.opsForValue().get(Constant.USER_LOGIN + username);
-        if(redisToken==null||redisToken.isEmpty()||!redisToken.equals(token)){
-            throw new ClientException(UserErrorCode.USER_DATA_ERROR);
-        }
         stringRedisTemplate.delete(Constant.USER_LOGIN+username);
+        stringRedisTemplate.delete(Constant.USER_LOGIN_REFRESH+username);
         stringRedisTemplate.delete(Constant.USER_IS_ADMIN + username);
     }
 
@@ -189,6 +191,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, UserDO> implements 
         if (update<1){
             throw new ServiceException("密码更新失败");
         }
+    }
+
+    @Override
+    public String refreshLogin(UserRefreshReqDTO requestParam) {
+        String refreshToken = requestParam.getRefreshToken();
+        if(refreshToken==null||refreshToken.isBlank()){
+            throw new ClientException("刷新令牌为空");
+        }
+        String username = JwtUtil.parseRefreshToken(refreshToken);
+        String redisRefreshToken = stringRedisTemplate.opsForValue().get(Constant.USER_LOGIN_REFRESH + username);
+        if(redisRefreshToken==null||!redisRefreshToken.equals(refreshToken)){
+            throw new ClientException("刷新令牌已失效，请重新登录");
+        }
+        String newAccessToken = JwtUtil.generateJwt(username);
+        stringRedisTemplate.opsForValue().set(Constant.USER_LOGIN + username, newAccessToken, 30, TimeUnit.MINUTES);
+        return newAccessToken;
     }
 
     private void notExists(UserRegisterReqDTO request){

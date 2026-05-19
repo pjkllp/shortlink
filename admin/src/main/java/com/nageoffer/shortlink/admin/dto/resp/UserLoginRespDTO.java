@@ -17,6 +17,11 @@ public class UserLoginRespDTO {
     private String token;
 
     /**
+     * 刷新token
+     */
+    private String refreshToken;
+
+    /**
      * 是否管理员：1=是，0=否
      */
     private Integer isAdmin;

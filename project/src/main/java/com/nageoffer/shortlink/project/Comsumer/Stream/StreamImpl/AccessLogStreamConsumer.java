@@ -60,6 +60,7 @@ public class AccessLogStreamConsumer extends AbstractStreamConsumer {
     @Scheduled(fixedDelay = 1000)
     @Override
     public void consumeStream() {
+        //这里的cas其实没必要，因为fixedDelay是先完成这个定时任务后，过了指定时间，才会再次执行
         if (!consuming.compareAndSet(false, true)) {
             return;
         }

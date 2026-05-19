@@ -22,6 +22,7 @@ public class JwtUtil {
 
     // 2. 正确计算过期时间（当前时间 + 24小时，单位：毫秒）
     private static final long EXPIRATION_TIME = 30*60* 1000; // 30分钟
+    private static final long REFRESH_EXPIRATION_TIME = 3 * 24 * 60 * 60 * 1000L; // 3天
 
     private static final Logger log = LoggerFactory.getLogger(JwtUtil.class);
 
@@ -65,6 +66,53 @@ public class JwtUtil {
             }
 
             return claims.get("username", String.class); // 返回用户ID
+
+        } catch (Exception e) {
+            throw new ClientException(UserErrorCode.USER_TOKEN_ERROR);
+        }
+    }
+
+    /**
+     * 生成刷新令牌，过期时间3天
+     */
+    public static String generateRefreshToken(String id) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("username", id);
+        claims.put("type", "refresh");
+
+        Date expirationDate = new Date(System.currentTimeMillis() + REFRESH_EXPIRATION_TIME);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setExpiration(expirationDate)
+                .signWith(SECRET, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    /**
+     * 解析刷新令牌，只接受 type=refresh 的令牌
+     */
+    public static String parseRefreshToken(String token) {
+        try {
+            if (token != null && token.startsWith("Bearer ")) {
+                token = token.substring(7).trim();
+            }
+
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(SECRET)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            if (claims.getExpiration().before(new Date())) {
+                throw new ClientException(UserErrorCode.USER_TOKEN_ERROR);
+            }
+
+            if (!"refresh".equals(claims.get("type", String.class))) {
+                throw new ClientException(UserErrorCode.USER_TOKEN_ERROR);
+            }
+
+            return claims.get("username", String.class);
 
         } catch (Exception e) {
             throw new ClientException(UserErrorCode.USER_TOKEN_ERROR);

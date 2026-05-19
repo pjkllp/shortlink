@@ -55,4 +55,6 @@ public interface UserService extends IService<UserDO> {
     void getReviseCode(UserReviseReqDTO request);
 
     void revise(UserReviseReqDTO request);
+
+    String refreshLogin(UserRefreshReqDTO requestParam);
 }

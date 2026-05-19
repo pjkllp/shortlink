@@ -38,13 +38,14 @@ public class AuthGlobalFilter implements WebFilter {
     private final StringRedisTemplate stringRedisTemplate;
 
     private static final Pattern WHITE_LIST_PATTERN = Pattern.compile(
-            "^/api/short-link/admin/v1/user/[^/]+$" +
-                    "|^/api/short-link/admin/v1/has_username/?$" +
-                    "|^/api/short-link/admin/v1/getCode$" +
-                    "|^/api/short-link/admin/v1/user$" +
-                    "|^/api/short-link/admin/v1/login$" +
-                    "|^/api/short-link/admin/v1/logout$" +
-                    "|^/[^/]+$"
+            "(^/api/short-link/admin/v1/user/[^/]+$)" +
+                    "|(^/api/short-link/admin/v1/has_username/?$)" +
+                    "|(^/api/short-link/admin/v1/getCode$)" +
+                    "|(^/api/short-link/admin/v1/user$)" +
+                    "|(^/api/short-link/admin/v1/login$)" +
+                    "|(^/api/short-link/admin/v1/refreshLogin$)" +
+                    "|(^/api/short-link/admin/v1/logout$)" +
+                    "|(^/[^/]+$)"
     );
 
     private static String USER_RISK_CONTROL_LUA_PATH="jetbrains://idea/navigate/reference?project=shortlink&path=lua/user_rist_contro.lua";
