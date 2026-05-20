@@ -42,7 +42,7 @@ spring:
     sentinel:
       transport:
         dashboard: 127.0.0.1:8858 # Sentinel 控制台地址
-        port: 8719 # 客户端和控制台通信端口（默认8719，冲突可改）
+        port: 8720 # 客户端和控制台通信端口（默认8719，冲突可改）
       eager: true # 启动时主动连接控制台（避免首次请求才初始化）
   data:
     redis:

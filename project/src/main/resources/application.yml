@@ -45,6 +45,11 @@ spring:
         ip: 127.0.0.1
         heartbeat-interval: 10000
         heartbeat-timeout: 20000
+    sentinel:
+      transport:
+        dashboard: 127.0.0.1:8858
+        port: 8721
+      eager: true
   mvc:
     view:
       prefix: /templates/

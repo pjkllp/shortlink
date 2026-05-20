@@ -38,6 +38,7 @@ public class AuthGlobalFilter implements WebFilter {
     private final StringRedisTemplate stringRedisTemplate;
 
     private static final Pattern WHITE_LIST_PATTERN = Pattern.compile(
+            // 管理员用户相关接口
             "(^/api/short-link/admin/v1/user/[^/]+$)" +
                     "|(^/api/short-link/admin/v1/has_username/?$)" +
                     "|(^/api/short-link/admin/v1/getCode$)" +
@@ -45,7 +46,10 @@ public class AuthGlobalFilter implements WebFilter {
                     "|(^/api/short-link/admin/v1/login$)" +
                     "|(^/api/short-link/admin/v1/refreshLogin$)" +
                     "|(^/api/short-link/admin/v1/logout$)" +
-                    "|(^/[^/]+$)"
+                    // ✅ 修复：短链接重定向接口，同时匹配带斜杠和不带斜杠的情况
+                    "|(^/[^/]+/?$)" +
+                    // ✅ 额外添加：根路径放行（可选，防止访问首页被拦截）
+                    "|(^/$)"
     );
 
     private static String USER_RISK_CONTROL_LUA_PATH="jetbrains://idea/navigate/reference?project=shortlink&path=lua/user_rist_contro.lua";
