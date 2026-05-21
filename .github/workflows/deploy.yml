@@ -1,0 +1,55 @@
+name: ShortLink 微服务 Docker 部署
+run-name: ${{ github.actor }} 触发部署 @${{ github.sha }}
+
+on:
+  push:
+    branches: [ "master" ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build & Test with Maven
+        run: mvn clean install
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Deploy to Alibaba Cloud Linux
+        run: |
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+            DEPLOY_DIR=/opt/shortlink
+            mkdir -p $DEPLOY_DIR/logs/{gateway,project,admin}
+            cd $DEPLOY_DIR
+
+            # 拉取最新代码
+            rm -rf project admin gateway docker-compose.yml
+            git clone --depth 1 -b master https://github.com/你的用户名/你的仓库名.git tmp
+            cp -r tmp/project tmp/admin tmp/gateway tmp/docker-compose.yml .
+            rm -rf tmp
+
+            # 兼容两种 compose 命令
+            which docker-compose && export COMPOSE_CMD="docker-compose" || export COMPOSE_CMD="docker compose"
+
+            # 重建镜像并启动容器
+            echo "Pulling and building images..."
+            $COMPOSE_CMD down
+            $COMPOSE_CMD up -d --build
+
+            # 清理旧镜像
+            docker image prune -f
+
+            echo "Docker 部署完成"
+          EOF

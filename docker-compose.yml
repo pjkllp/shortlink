@@ -1,0 +1,40 @@
+version: '3.8'
+networks:
+  app-net:
+    driver: bridge
+services:
+  project:
+    build: ./project
+    container_name: shortlink-project
+    restart: always
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./logs/project:/app/logs
+    networks:
+      - app-net
+
+  admin:
+    build: ./admin
+    container_name: shortlink-admin
+    restart: always
+    ports:
+      - "8002:8002"
+    volumes:
+      - ./logs/admin:/app/logs
+    networks:
+      - app-net
+
+  gateway:
+    build: ./gateway
+    container_name: shortlink-gateway
+    restart: always
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs/gateway:/app/logs
+    networks:
+      - app-net
+    depends_on:
+      - project
+      - admin

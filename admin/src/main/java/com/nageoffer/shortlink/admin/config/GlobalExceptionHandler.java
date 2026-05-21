@@ -14,4 +14,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400)
                 .body(new Result<>().setMessage(e.errorMessage).setCode(e.errorCode));
     }
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Result<Object>> handleException(Exception e){
+        return ResponseEntity.status(500)
+                .body(Result.fail(e.getMessage()));
+    }
 }

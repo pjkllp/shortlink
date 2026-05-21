@@ -2,7 +2,6 @@ package com.nageoffer.shortlink.gateway.common.web;
 
 import cn.hutool.core.util.IdUtil;
 import com.alibaba.fastjson2.JSON;
-import com.nageoffer.shortlink.gateway.common.entity.AccessLogDO;
 import com.nageoffer.shortlink.gateway.common.entity.AccessLogStream;
 import com.nageoffer.shortlink.gateway.toolkit.IpUtil;
 import com.nageoffer.shortlink.gateway.toolkit.UserAgentParserUtil;

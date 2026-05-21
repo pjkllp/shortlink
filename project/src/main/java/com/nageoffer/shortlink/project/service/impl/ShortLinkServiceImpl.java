@@ -6,6 +6,7 @@ import cn.hutool.core.lang.UUID;
 import cn.hutool.core.text.StrBuilder;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.db.Page;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -106,8 +107,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Value("${stats.mq.enabled:false}")
     private boolean statsMqEnabled;
 
-    @Value("${short-link.domain.default:pengwater.xin}")
-//    @Value("${short-link.domain.default:nurl.local}")
+    @Value("${short-link.domain.default:nurl.local}")
+//    @Value("${short-link.domain.default:pengwater.xin}")
     private String createShortLinkDefaultDomain;
     @Value("${short-link.protocol:https}")
     private String shortLinkProtocol;
@@ -289,7 +290,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
-        String fullShortUrl="https"+"://"+createShortLinkDefaultDomain+"/"+shortUri;
+        String fullShortUrl=shortLinkProtocol+"://"+createShortLinkDefaultDomain+"/"+shortUri;
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         log.info("redis缓存获取原始链接：{}",originalUrl);
         if (StrUtil.isNotBlank(originalUrl)) {
