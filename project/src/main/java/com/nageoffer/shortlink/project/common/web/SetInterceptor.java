@@ -14,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class SetInterceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        System.out.println("请求路径: " + request.getRequestURI());
         String username = request.getHeader("username");
         String isAdminHeader = request.getHeader("isAdmin");
         if (StrUtil.isBlank(username) || StrUtil.isBlank(isAdminHeader)) {

@@ -55,10 +55,11 @@ spring:
       prefix: /templates/
       suffix: .html
 short-link:
-  protocol: https
+  protocol: http
+#  protocol: https
   domain:
-    default: pengwater.xin
-#    default: nurl.local
+#    default: pengwater.xin
+    default: nurl.local
 
 gaode:
   amap:

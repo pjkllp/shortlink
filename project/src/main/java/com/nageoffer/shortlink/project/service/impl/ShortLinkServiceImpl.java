@@ -106,8 +106,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Value("${stats.mq.enabled:false}")
     private boolean statsMqEnabled;
 
-    @Value("${short-link.domain.default:pengwater.xin}")
-//    @Value("${short-link.domain.default:nurl.local}")
+    @Value("${short-link.domain.default:nurl.local}")
+//    @Value("${short-link.domain.default:pengwater.xin}")
     private String createShortLinkDefaultDomain;
     @Value("${short-link.protocol:https}")
     private String shortLinkProtocol;
@@ -289,7 +289,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
-        String fullShortUrl="https"+"://"+createShortLinkDefaultDomain+"/"+shortUri;
+        String fullShortUrl=shortLinkProtocol+"://"+createShortLinkDefaultDomain+"/"+shortUri;
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         log.info("redis缓存获取原始链接：{}",originalUrl);
         if (StrUtil.isNotBlank(originalUrl)) {
