@@ -38,15 +38,11 @@ jobs:
           ssh-keyscan ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # ========== 新增：先远程清理服务器旧文件（关键修复） ==========
       - name: 远程清理旧文件&旧目录
         run: |
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<- 'EOF'
-            cd /opt/shortlink
-            rm -f *.jar
-            rm -rf admin project gateway
-            mkdir -p logs/{project,admin,gateway}
-          EOF
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && rm -f *.jar"
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && rm -rf admin project gateway"
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && mkdir -p logs/{project,admin,gateway}"
 
       # 6. SCP上传：全新文件/目录（此时服务器已经是干净环境）
       - name: 上传所有文件与目录
@@ -57,18 +53,8 @@ jobs:
           scp -P ${{ secrets.SERVER_PORT }} gateway/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -r -P ${{ secrets.SERVER_PORT }} admin project gateway ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
 
-      # 7. 远程启动Docker
       - name: 远程部署启动服务
         run: |
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} <<- 'EOF'
-            COMPOSE_FILE="/opt/shortlink/docker-compose.yml"
-            if command -v docker compose &> /dev/null; then
-              docker compose -f $COMPOSE_FILE down
-              docker compose -f $COMPOSE_FILE up -d --build
-              docker compose -f $COMPOSE_FILE ps
-            else
-              docker-compose -f $COMPOSE_FILE down
-              docker-compose -f $COMPOSE_FILE up -d --build
-              docker-compose -f $COMPOSE_FILE ps
-            fi
-          EOF
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && (docker compose down || docker-compose down)"
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && (docker compose up -d --build || docker-compose up -d --build)"
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && (docker compose ps || docker-compose ps)"
