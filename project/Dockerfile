@@ -3,8 +3,7 @@ WORKDIR /app
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-# 重点：Jar 在【上级目录】，用 ../ 跳出构建上下文
-COPY ../shortlink-project-*.jar app.jar
+COPY ./shortlink-project-*.jar app.jar
 EXPOSE 8001
 
 ENTRYPOINT [\

@@ -1,10 +1,11 @@
-version: '3.8'
 networks:
   app-net:
     driver: bridge
 services:
   project:
-    build: ./project
+    build:
+      context: ./          # 构建上下文 = 根目录（能读到根目录的jar）
+      dockerfile: project/Dockerfile
     container_name: shortlink-project
     restart: always
     ports:
@@ -15,7 +16,9 @@ services:
       - app-net
 
   admin:
-    build: ./admin
+    build:
+      context: ./
+      dockerfile: admin/Dockerfile
     container_name: shortlink-admin
     restart: always
     ports:
@@ -26,7 +29,9 @@ services:
       - app-net
 
   gateway:
-    build: ./gateway
+    build:
+      context: ./
+      dockerfile: gateway/Dockerfile
     container_name: shortlink-gateway
     restart: always
     ports:
