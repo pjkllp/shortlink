@@ -27,7 +27,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: host.docker.internal:8848
+        server-addr: 172.23.155.107:8848
         register-enabled: true
         fail-fast: false
         heartbeat-interval: 10000
@@ -39,7 +39,7 @@ spring:
       web-context-unify: false
   data:
     redis:
-      host: host.docker.internal
+      host: 172.23.155.107
       port: 6379
       password: 123456
       database: 0

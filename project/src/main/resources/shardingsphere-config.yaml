@@ -3,7 +3,7 @@ dataSources:
   ds_0:
     dataSourceClassName: com.zaxxer.hikari.HikariDataSource
     driverClassName: com.mysql.cj.jdbc.Driver
-    jdbcUrl: jdbc:mysql://host.docker.internal:3309/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
+    jdbcUrl: jdbc:mysql://172.23.155.107:3309/Link?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
     password: 123456
     maximumPoolSize: 10
