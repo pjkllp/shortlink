@@ -37,26 +37,18 @@ jobs:
       - name: Deploy to Alibaba Cloud Linux
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-            DEPLOY_DIR=/opt/shortlink
-            mkdir -p $DEPLOY_DIR/logs/{gateway,project,admin}
+            DEPLOY_DIR="/opt/shortlink"
+            mkdir -p $DEPLOY_DIR/logs/{project,admin,gateway}
             cd $DEPLOY_DIR
-
-            # 拉取最新代码
-            rm -rf project admin gateway docker-compose.yml
-            git clone --depth 1 -b master https://github.com/你的用户名/你的仓库名.git tmp
-            cp -r tmp/project tmp/admin tmp/gateway tmp/docker-compose.yml .
-            rm -rf tmp
-
-            # 兼容两种 compose 命令
-            which docker-compose && export COMPOSE_CMD="docker-compose" || export COMPOSE_CMD="docker compose"
-
-            # 重建镜像并启动容器
-            echo "Pulling and building images..."
-            $COMPOSE_CMD down
-            $COMPOSE_CMD up -d --build
-
-            # 清理旧镜像
-            docker image prune -f
-
-            echo "Docker 部署完成"
+            rm -rf gateway project admin docker-compose.yml
+            git clone --depth 1 -b master https://github.com/pjkllp/shortlink.git temp_code
+            cp -r temp_code/* ./
+            rm -rf temp_code
+            if command -v docker compose &> /dev/null; then
+              docker compose down
+              docker compose up -d --build
+            else
+              docker-compose down
+              docker-compose up -d --build
+            fi
           EOF
