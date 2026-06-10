@@ -21,11 +21,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      # 3. Maven打包（加上-DskipTests 跳过测试，提速）
+      # 3. Maven打包 跳过测试
       - name: maven打包
         run: mvn clean install -DskipTests
 
-      # 4. 加载SSH私钥到系统代理
+      # 4. 加载SSH私钥代理
       - name: 加载SSH私钥代理
         uses: webfactory/ssh-agent@v0.9.0
         with:
@@ -38,27 +38,39 @@ jobs:
           ssh-keyscan ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
-      # 6. 原生SCP上传Jar
-      - name: 原生SCP上传Jar包
+      # 6. SCP上传：配置文件 + Jar包 + 三个目录(含Dockerfile)
+      - name: 上传所有文件与目录
         run: |
+          # 1. 上传根目录配置文件
           scp -P ${{ secrets.SERVER_PORT }} docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           
+          # 2. 上传三个模块的Jar包
           scp -P ${{ secrets.SERVER_PORT }} project/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -P ${{ secrets.SERVER_PORT }} admin/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -P ${{ secrets.SERVER_PORT }} gateway/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
+          
+          # 3. 递归上传三个文件夹（重点：加 -r 上传目录，内含Dockerfile）
+          scp -r -P ${{ secrets.SERVER_PORT }} admin project gateway ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
 
-      # 7. 原生SSH登录服务器，执行Docker部署
+      # 7. 远程部署
       - name: 原生SSH部署Docker
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
             cd /opt/shortlink
             mkdir -p logs/{project,admin,gateway}
+          
+            # 清理旧Jar包，避免多包残留
+            rm -f *.jar
+
+            # 强制指定配置文件
+            COMPOSE_FILE="/opt/shortlink/docker-compose.yml"
             if command -v docker compose &> /dev/null; then
-              docker compose down
-              docker compose up -d --build
+              docker compose -f $COMPOSE_FILE down
+              docker compose -f $COMPOSE_FILE up -d --build
+              docker compose -f $COMPOSE_FILE ps
             else
-              docker-compose down
-              docker-compose up -d --build
+              docker-compose -f $COMPOSE_FILE down
+              docker-compose -f $COMPOSE_FILE up -d --build
+              docker-compose -f $COMPOSE_FILE ps
             fi
-            docker compose ps
           EOF
