@@ -41,11 +41,11 @@ jobs:
       # 6. 原生SCP上传Jar
       - name: 原生SCP上传Jar包
         run: |
-          # 进入各模块 target 目录上传，自动剥离层级，和 strip_components=2 效果一致
-          cd project/target && scp -P ${{ secrets.SERVER_PORT }} *.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
-          cd ../../admin/target && scp -P ${{ secrets.SERVER_PORT }} *.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
-          cd ../../gateway/target && scp -P ${{ secrets.SERVER_PORT }} *.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -P ${{ secrets.SERVER_PORT }} docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
+          
+          scp -P ${{ secrets.SERVER_PORT }} project/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
+          scp -P ${{ secrets.SERVER_PORT }} admin/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
+          scp -P ${{ secrets.SERVER_PORT }} gateway/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
 
       # 7. 原生SSH登录服务器，执行Docker部署
       - name: 原生SSH部署Docker
