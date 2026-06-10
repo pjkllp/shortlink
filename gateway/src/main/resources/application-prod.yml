@@ -15,8 +15,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
-        ip: 127.0.0.1
+        server-addr: host.docker.internal:8848
         register-enabled: false
     gateway:
       routes:
@@ -41,12 +40,11 @@ spring:
     # Sentinel 核心配置
     sentinel:
       transport:
-        dashboard: 127.0.0.1:8858 # Sentinel 控制台地址
         port: 8720 # 客户端和控制台通信端口（默认8719，冲突可改）
       eager: true # 启动时主动连接控制台（避免首次请求才初始化）
   data:
     redis:
-      host: 127.0.0.1
+      host: host.docker.internal
       port: 6379
       password: 123456
       database: 0

@@ -26,7 +26,7 @@ spring:
       connection-test-query: SELECT 1  # 连接测试查询
   data:
     redis:
-      host: 127.0.0.1
+      host: host.docker.internal
       port: 6379
       password: 123456
       database: 0
@@ -40,14 +40,12 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 127.0.0.1:8848
+        server-addr: host.docker.internal:8848
         fail-fast: false
-        ip: 127.0.0.1
         heartbeat-interval: 10000
         heartbeat-timeout: 20000
     sentinel:
       transport:
-        dashboard: 127.0.0.1:8858
         port: 8721
       eager: true
       web-context-unify: false
@@ -67,7 +65,7 @@ gaode:
     key: c2a69289fa819a2e36b6e467c82d692c
 # RocketMQ 核心配置
 rocketmq:
-  name-server: 127.0.0.1:9876  # 虚拟机 NameServer 地址（关键！）
+  name-server: host.docker.internal:9876  # 虚拟机 NameServer 地址（关键！）
   producer:
     group: default-producer-group  # 生产者组名，自定义
     send-message-timeout: 3000  # 发送超时时间
