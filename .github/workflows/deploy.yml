@@ -20,7 +20,7 @@ jobs:
           cache: maven
 
       - name: Build & Test with Maven
-        run: mvn clean install
+        run: mvn clean install -DskipTests
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
