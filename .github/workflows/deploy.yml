@@ -10,31 +10,34 @@ jobs:
     runs-on: ubuntu-latest  # GitHub云端Ubuntu环境
     steps:
       # 1. 拉取代码
-      - uses: actions/checkout@v4
+      - name: 拉取代码
+        uses: actions/checkout@v4
 
       # 2. 配置JDK环境（和你项目一致，这里用JDK17）
-      - name: Set up JDK 17
+      - name: 配置JDK17
         uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
           cache: maven  # 缓存Maven依赖，加速打包
 
-      # 3. Maven打包（云端生成Jar，跳过测试）
-      - name: Build with Maven
-        run: mvn clean install -DskipTests
+      # 3. Maven打包
+      - name: maven打包
+        run: mvn clean install
 
       # 4. SCP上传Jar包到服务器（用SSH私钥认证，替换了原来的密码方式）
-      - name: Upload JAR files to server
+      - name: scp上传jar包到服务器
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}    # 服务器IP
           username: ${{ secrets.SERVER_USER }}# 服务器用户名（比如root）
           key: ${{ secrets.SERVER_SSH_KEY }} # 私钥认证，替换了password
           port: ${{ secrets.SERVER_PORT }}   # 服务器SSH端口（默认22）
+          fingerprint: ${{ secrets.KNOWN_HOSTS }}
           source: "project/target/*.jar,admin/target/*.jar,gateway/target/*.jar"
           target: "/opt/shortlink"  # 服务器接收目录
           strip_components: 2  # 去掉target目录层级，直接把Jar放target同级
+          use_insecure_cipher: true  # 解决阿里云算法兼容问题
 
       # 5. SSH连接服务器，启动Docker（同样用私钥认证）
       - name: Deploy on server
@@ -44,6 +47,8 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }} # 私钥认证，替换了password
           port: ${{ secrets.SERVER_PORT }}
+          fingerprint: ${{ secrets.KNOWN_HOSTS }}
+          use_insecure_cipher: true  # 解决阿里云算法兼容问题
           script: |
             # 进入部署目录
             cd /opt/shortlink
