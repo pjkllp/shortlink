@@ -30,7 +30,7 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}    # 服务器IP
           username: ${{ secrets.SERVER_USER }}# 服务器用户名（比如root）
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # 私钥认证，替换了password
+          key: ${{ secrets.SERVER_SSH_KEY }} # 私钥认证，替换了password
           port: ${{ secrets.SERVER_PORT }}   # 服务器SSH端口（默认22）
           source: "project/target/*.jar,admin/target/*.jar,gateway/target/*.jar"
           target: "/opt/shortlink"  # 服务器接收目录
@@ -42,7 +42,7 @@ jobs:
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # 私钥认证，替换了password
+          key: ${{ secrets.SERVER_SSH_KEY }} # 私钥认证，替换了password
           port: ${{ secrets.SERVER_PORT }}
           script: |
             # 进入部署目录
