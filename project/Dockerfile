@@ -6,7 +6,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 COPY target/*.jar app.jar
 EXPOSE 8001
 
-# 与你之前脚本完全一致的 project 服务 JVM 参数
 ENTRYPOINT [
     "java",
     "-Xms128m",
