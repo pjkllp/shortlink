@@ -44,15 +44,24 @@ jobs:
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && rm -rf admin project gateway"
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && mkdir -p logs/{project,admin,gateway}"
 
-      # 6. SCP上传：全新文件/目录（此时服务器已经是干净环境）
+  # 6. SCP上传：只传必要文件，不带多余内容
       - name: 上传所有文件与目录
         run: |
+      # 1. 上传根目录的 compose 配置文件
           scp -P ${{ secrets.SERVER_PORT }} docker-compose.yml ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
+      
+      # 2. 上传三个模块的Jar包（根目录）
           scp -P ${{ secrets.SERVER_PORT }} project/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -P ${{ secrets.SERVER_PORT }} admin/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
           scp -P ${{ secrets.SERVER_PORT }} gateway/target/*.jar ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
-          scp -r -P ${{ secrets.SERVER_PORT }} admin project gateway ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/
-
+      
+      # 3. 【关键】只上传每个目录下的 Dockerfile，不上传整个目录
+      # 先在服务器上创建目录（如果不存在）
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "mkdir -p /opt/shortlink/admin /opt/shortlink/project /opt/shortlink/gateway"
+      # 把每个目录的 Dockerfile 传到服务器对应位置
+          scp -P ${{ secrets.SERVER_PORT }} admin/Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/admin/
+          scp -P ${{ secrets.SERVER_PORT }} project/Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/project/
+          scp -P ${{ secrets.SERVER_PORT }} gateway/Dockerfile ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/opt/shortlink/gateway/
       - name: 远程部署启动服务
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd /opt/shortlink && (docker compose down || docker-compose down)"
