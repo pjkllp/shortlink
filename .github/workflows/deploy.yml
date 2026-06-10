@@ -24,25 +24,25 @@ jobs:
       - name: Build with Maven
         run: mvn clean install -DskipTests
 
-      # 4. SCP上传Jar包到服务器（三个服务的Jar都传）
+      # 4. SCP上传Jar包到服务器（用SSH私钥认证，替换了原来的密码方式）
       - name: Upload JAR files to server
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.SERVER_HOST }}    # 服务器IP
-          username: ${{ secrets.SERVER_USER }}# 服务器用户名
-          password: ${{ secrets.SERVER_PWD }} # 服务器密码（或用key: ${{ secrets.SSH_PRIVATE_KEY }}）
-          port: ${{ secrets.SERVER_PORT }}   # 服务器SSH端口
+          username: ${{ secrets.SERVER_USER }}# 服务器用户名（比如root）
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # 私钥认证，替换了password
+          port: ${{ secrets.SERVER_PORT }}   # 服务器SSH端口（默认22）
           source: "project/target/*.jar,admin/target/*.jar,gateway/target/*.jar"
           target: "/opt/shortlink"  # 服务器接收目录
           strip_components: 2  # 去掉target目录层级，直接把Jar放target同级
 
-      # 5. SSH连接服务器，启动Docker
+      # 5. SSH连接服务器，启动Docker（同样用私钥认证）
       - name: Deploy on server
         uses: appleboy/ssh-action@v0.1.10
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
-          password: ${{ secrets.SERVER_PWD }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # 私钥认证，替换了password
           port: ${{ secrets.SERVER_PORT }}
           script: |
             # 进入部署目录
