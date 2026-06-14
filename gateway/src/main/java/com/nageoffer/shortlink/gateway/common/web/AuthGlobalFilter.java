@@ -32,7 +32,7 @@ import java.util.List;
  */
 @Component
 @RequiredArgsConstructor
-@Order(-100)
+@Order(0)
 public class AuthGlobalFilter implements WebFilter {
 
     private final StringRedisTemplate stringRedisTemplate;

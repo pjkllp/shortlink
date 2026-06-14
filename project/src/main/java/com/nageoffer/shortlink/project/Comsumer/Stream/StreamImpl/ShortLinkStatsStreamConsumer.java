@@ -114,6 +114,7 @@ public class ShortLinkStatsStreamConsumer extends AbstractStreamConsumer {
         }
     }
 
+    //进入数据库归档，后期可进行人工投放
     private void archiveStreamFailedMessage(MapRecord<String, Object, Object> record, String payload, Exception ex) {
         try {
             String errMsg = ex == null ? "UNKNOWN" : ex.getMessage();

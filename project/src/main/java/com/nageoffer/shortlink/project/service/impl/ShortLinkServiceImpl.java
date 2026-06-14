@@ -137,7 +137,6 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         try{
             baseMapper.insert(shortLinkDO);
         }catch (DuplicateKeyException e){
-            //TODO 已经误判的短链接如何处理
             log.warn("短链接:{}重复入库",fullShortUrl);
             throw new ServiceException("短链接生成重复");
         }
