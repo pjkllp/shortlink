@@ -289,15 +289,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     }
     private final ExecutorService statsExecutor;
 
-    @SentinelResource(
-            value = "short-link-goto-link",
-            //熔断降级
-            blockHandlerClass = ShortLinkBlockHandler.class,
-            blockHandler = "blockHandlerRestoreUrl",
-            //异常兜底
-            fallback = "restoreUrlFallback",
-            fallbackClass = ShortLinkBlockHandler.class
-    )
+
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         String fullShortUrl=shortLinkProtocol+"://"+createShortLinkDefaultDomain+"/"+shortUri;

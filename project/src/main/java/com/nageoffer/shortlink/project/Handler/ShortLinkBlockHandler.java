@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class ShortLinkBlockHandler {
     // 限流兜底：静态方法 + 参数匹配 + BlockException
-    public static Result blockHandlerRestoreUrl(  String shortUri,
+    public static Result<Void> blockHandlerRestoreUrl(  String shortUri,
                                          HttpServletRequest request,
                                          HttpServletResponse response,
                                          BlockException ex) {
@@ -17,7 +17,7 @@ public class ShortLinkBlockHandler {
     }
 
     // 熔断降级兜底：静态方法 + 参数匹配 + Throwable
-    public static Result restoreUrlFallback( String shortUri,
+    public static Result<Void> restoreUrlFallback( String shortUri,
                                          HttpServletRequest request,
                                          HttpServletResponse response,
                                          Throwable ex) {

@@ -173,8 +173,10 @@ public class doMessage {
                     .os(msg.getOs())
                     .device(msg.getDevice())
                     .build();
-            linkAccessLogsMapper.insert(accessLogs);
-
+            int insert = linkAccessLogsMapper.insert(accessLogs);
+            log.info("访问日志入库结果:{}", insert > 0 ? "成功" : "失败");
+            LinkAccessLogsDO checkRecord = linkAccessLogsMapper.selectById(accessLogs.getId());
+            log.info("插入后即时查询记录：{}", checkRecord != null ? "存在" : "不存在");
             log.info("监控数据入库成功，fullShortUrl:{}", msg.getFullShortUrl());
         } catch (Exception e) {
             if (StringUtils.isNotBlank(idempotentKey)) {
