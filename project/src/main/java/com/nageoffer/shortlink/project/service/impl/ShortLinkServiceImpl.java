@@ -7,12 +7,14 @@ import cn.hutool.core.text.StrBuilder;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.db.Page;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.nageoffer.shortlink.project.Handler.ShortLinkBlockHandler;
 import com.nageoffer.shortlink.project.common.enums.ValidDataTypeEnum;
 import com.nageoffer.shortlink.project.common.biz.user.UserContext;
 import com.nageoffer.shortlink.project.common.exceptions.ClientException;
@@ -287,6 +289,15 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     }
     private final ExecutorService statsExecutor;
 
+    @SentinelResource(
+            value = "short-link-goto-link",
+            //熔断降级
+            blockHandlerClass = ShortLinkBlockHandler.class,
+            blockHandler = "blockHandlerRestoreUrl",
+            //异常兜底
+            fallback = "restoreUrlFallback",
+            fallbackClass = ShortLinkBlockHandler.class
+    )
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         String fullShortUrl=shortLinkProtocol+"://"+createShortLinkDefaultDomain+"/"+shortUri;
