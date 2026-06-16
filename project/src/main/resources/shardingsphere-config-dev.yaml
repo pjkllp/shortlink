@@ -15,30 +15,24 @@ rules:
   # 1. 分片规则（独立区块，必须用 !SHARDING）
   - !SHARDING
     tables:
-      t_link:
-        actualDataNodes: ds_0.t_link_${0..4}
+      t_user:
+        actualDataNodes: ds_0.t_user_${0..4}
         tableStrategy:
           standard:
-            shardingColumn: gid
-            shardingAlgorithmName: link_table_hash_mod
-      t_link_goto:
-        actualDataNodes: ds_0.t_link_goto_${0..4}
-        tableStrategy:
-          standard:
-            shardingColumn: full_short_url
-            shardingAlgorithmName: link_goto_table_hash_mod
+            shardingColumn: username
+            shardingAlgorithmName: user_table_hash_mod
       t_group:
         actualDataNodes: ds_0.t_group_${0..4}
         tableStrategy:
           standard:
             shardingColumn: username
-            shardingAlgorithmName: link_table_hash_mod
+            shardingAlgorithmName: group_table_hash_mod
     shardingAlgorithms:
-      link_table_hash_mod:
+      user_table_hash_mod:
         type: HASH_MOD
         props:
           sharding-count: 5
-      link_goto_table_hash_mod:
+      group_table_hash_mod:
         type: HASH_MOD
         props:
           sharding-count: 5
@@ -50,21 +44,21 @@ rules:
         type: AES
         props:
           aes-key-value: dfar3qiejfqhfif9
-#
-#    tables:
-#      t_user:
-#        columns:
-#          phone: #逻辑字段（与dao对齐，代码中用的）
-#            cipherColumn: phone #物理字段，与数据库中的密文字段对应，还有一个plainColumn，是数据库存储的明文字段
-#            encryptorName: aes_encryptor
-#          mail:
-#            cipherColumn: mail
-#            encryptorName: aes_encryptor
-#          password:
-#            cipherColumn: password
-#            encryptorName: aes_encryptor
-#        # 是映射到数据库明文字段还是密文字段
-#        queryWithCipherColumn: true
+
+    tables:
+      t_user:
+        columns:
+          phone: #逻辑字段（与dao对齐，代码中用的）
+            cipherColumn: phone #物理字段，与数据库中的密文字段对应，还有一个plainColumn，是数据库存储的明文字段
+            encryptorName: aes_encryptor
+          mail:
+            cipherColumn: mail
+            encryptorName: aes_encryptor
+          password:
+            cipherColumn: password
+            encryptorName: aes_encryptor
+        # 是映射到数据库明文字段还是密文字段
+        queryWithCipherColumn: true
 
 # 公共属性
 props:
