@@ -1,11 +1,17 @@
 package com.nageoffer.shortlink.project.toolkit.DO;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * 高德IP定位接口响应实体类
  */
 @Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class AmapIpLocationResult {
 
     /**
