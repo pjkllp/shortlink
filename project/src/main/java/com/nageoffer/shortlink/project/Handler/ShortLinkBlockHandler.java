@@ -11,6 +11,8 @@ public class ShortLinkBlockHandler {
                                          HttpServletRequest request,
                                          HttpServletResponse response,
                                          BlockException ex) {
+        response.setContentType("application/json;charset=utf-8");
+        response.setCharacterEncoding("UTF-8");
         return Result.fail("请求太快啦，稍后再试~");
     }
 
@@ -19,6 +21,8 @@ public class ShortLinkBlockHandler {
                                          HttpServletRequest request,
                                          HttpServletResponse response,
                                          Throwable ex) {
+        response.setContentType("application/json;charset=utf-8");
+        response.setCharacterEncoding("UTF-8");
         return Result.fail("服务繁忙，请稍后重试");
     }
 
