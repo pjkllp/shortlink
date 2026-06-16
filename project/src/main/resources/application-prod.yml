@@ -77,7 +77,7 @@ stats:
   mq:
     enabled: false
 rules:
-  flow: 20
+  flow: 10
 logging:
   level:
     ShardingSphere-SQL: ERROR
