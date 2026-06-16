@@ -76,6 +76,8 @@ rocketmq:
 stats:
   mq:
     enabled: false
+rules:
+  flow: 20
 logging:
   level:
     ShardingSphere-SQL: ERROR

@@ -8,24 +8,29 @@ import com.alibaba.csp.sentinel.slots.block.flow.FlowRuleManager;
 import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRule;
 import com.alibaba.csp.sentinel.slots.block.flow.param.ParamFlowRuleManager;
 import jakarta.annotation.PostConstruct;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.Collections;
 
 @Component
+@RequiredArgsConstructor
 public class SentinelRuleConfig {
 
     /**
      * 对短链接访问接口（资源名 "short-link-goto-link"）设置热点参数限流和熔断规则
      */
+
+    private final FlowRulesProperties flowRulesProperties;
+
     @PostConstruct
     public void initRules() {
         // 1. 创建热点参数限流规则
         ParamFlowRule rule = new ParamFlowRule("short-link-goto-link")  // 资源名和@SentinelResource一致
                 .setParamIdx(0)  // 对第0个参数（shortUri）限流
                 .setGrade(RuleConstant.FLOW_GRADE_QPS)  // 按QPS限流
-                .setCount(50)  // 同一个短链接每秒最多50次请求
+                .setCount(flowRulesProperties.getFlow())
                 .setDurationInSec(1);  // 统计窗口1秒
         // 加载热点参数限流规则
         ParamFlowRuleManager.loadRules(Collections.singletonList(rule));
@@ -52,7 +57,7 @@ public class SentinelRuleConfig {
         // 1. 普通流控规则：限制高德定位总调用量，每秒最多40次（匹配高德免费QPS上限）
         FlowRule amapFlowRule = new FlowRule("getLocationByIp")
                 .setGrade(RuleConstant.FLOW_GRADE_QPS) // 限流维度：QPS
-                .setCount(40) // 单机每秒最大请求数
+                .setCount(flowRulesProperties.getFlow()) // 单机每秒最大请求数
                 .setControlBehavior(RuleConstant.CONTROL_BEHAVIOR_DEFAULT); // 流控效果：快速失败
         // 普通流控规则必须用 FlowRuleManager 加载
         FlowRuleManager.loadRules(Collections.singletonList(amapFlowRule));
