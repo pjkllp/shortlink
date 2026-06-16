@@ -2,8 +2,8 @@ server:
   port: 8001
   tomcat:
     threads:
-      max: 8  # 最大线程数，默认200，改成800
-      min-spare: 2  # 最小空闲线程数
+      max: 20  # 最大线程数，默认200，改成800
+      min-spare: 4  # 最小空闲线程数
 spring:
   application:
     name: shortlink-project
@@ -18,7 +18,7 @@ spring:
     hikari:
       pool-name: HikariPool-ShortLink
       # 2核4G服务器核心配置
-      maximum-pool-size: 6      # 最大连接数：CPU核心数*2+2
+      maximum-pool-size: 20      # 最大连接数：CPU核心数*2+2
       minimum-idle: 4            # 最小空闲连接：物理核心数*2=4
       idle-timeout: 30000        # 空闲连接超时时间：30秒
       connection-timeout: 30000  # 连接超时时间：30秒
@@ -77,7 +77,7 @@ stats:
   mq:
     enabled: false
 rules:
-  flow: 10
+  flow: 20
 logging:
   level:
     ShardingSphere-SQL: ERROR

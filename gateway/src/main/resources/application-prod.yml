@@ -19,6 +19,12 @@ spring:
         register-enabled: false
     gateway:
       routes:
+        # 页面路由放最前面优先匹配
+        - id: shortlink-page
+          uri: lb://shortlink-project
+          predicates:
+            - Path=/page/**
+
         # 短链接直跳：/abc123 -> shortlink-project
         - id: shortlink-redirect
           uri: lb://shortlink-project

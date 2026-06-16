@@ -292,6 +292,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Override
     public void restoreUrl(String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
+        String notfound = shortLinkProtocol + "://" + createShortLinkDefaultDomain + "/page/notfound";
         String fullShortUrl=shortLinkProtocol+"://"+createShortLinkDefaultDomain+"/"+shortUri;
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         log.info("redis缓存获取原始链接：{}",originalUrl);
@@ -307,14 +308,14 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         boolean contains = shortLinkCreateCachePenetrationBloomFilter.contains(shortUri);
         if(!contains){
             log.info("布隆过滤器中没用此短链接{}，返回not found",shortUri);
-            response.sendRedirect("/page/notfound");
+            response.sendRedirect(notfound);
             return;
         }
         //防止缓存穿透
         String gotoShortLinkIsnull = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_IS_NULL, fullShortUrl));
         if(StrUtil.isNotBlank(gotoShortLinkIsnull)){
             log.info("缓存穿透生效，穿透短链接为:{}",shortUri);
-            response.sendRedirect("/page/notfound");
+            response.sendRedirect(notfound);
             return;
         }
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK, fullShortUrl));
@@ -346,7 +347,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkGotoDO::getFullShortUrl, fullShortUrl);
             ShortLinkGotoDO shortLinkGotoDO = shortLinkGotoMapper.selectOne(wrapper);
             if(shortLinkGotoDO==null){
-                response.sendRedirect("/page/notfound");
+                response.sendRedirect(notfound);
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
                 return;
             }
@@ -357,7 +358,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                     .eq(ShortLinkDO::getDelFlag,0);
             ShortLinkDO shortLinkDO = baseMapper.selectOne(queryWrapper);
             if (shortLinkDO == null || (shortLinkDO.getValidData() != null && shortLinkDO.getValidData().before(new Date()))) {
-                response.sendRedirect("/page/notfound");
+                response.sendRedirect(notfound);
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_IS_NULL,fullShortUrl),"-",30,TimeUnit.MINUTES);
                 return;
             }

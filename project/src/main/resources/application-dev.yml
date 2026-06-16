@@ -2,8 +2,8 @@ server:
   port: 8001
   tomcat:
     threads:
-      max: 8  # 最大线程数，默认200，改成800
-      min-spare: 2  # 最小空闲线程数
+      max: 200
+      min-spare: 10
 spring:
   application:
     name: shortlink-project
@@ -18,8 +18,8 @@ spring:
     hikari:
       pool-name: HikariPool-ShortLink
       # 2核4G服务器核心配置
-      maximum-pool-size: 6      # 最大连接数：CPU核心数*2+2
-      minimum-idle: 4            # 最小空闲连接：物理核心数*2=4
+      maximum-pool-size: 40      # 最大连接数：CPU核心数*2+2
+      minimum-idle: 10            # 最小空闲连接：物理核心数*2=4
       idle-timeout: 30000        # 空闲连接超时时间：30秒
       connection-timeout: 30000  # 连接超时时间：30秒
       max-lifetime: 1800000      # 连接最大生命周期：30分钟
@@ -33,7 +33,7 @@ spring:
       # 2核4G服务器Redis连接池配置（Lettuce）
       lettuce:
         pool:
-          max-active: 12          # 最大连接数：Tomcat线程数+4=12
+          max-active: 40          # 最大连接数：Tomcat线程数+4=12
           max-idle: 8             # 最大空闲连接：8
           min-idle: 2             # 最小空闲连接：2
           max-wait: 3000ms        # 连接等待超时：3秒
