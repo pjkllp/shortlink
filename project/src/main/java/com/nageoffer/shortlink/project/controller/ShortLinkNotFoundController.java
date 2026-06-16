@@ -8,6 +8,11 @@ public class ShortLinkNotFoundController {
 
     @RequestMapping("/page/notfound")
     public String notfound(){
-        return "notfound";
+        return "NOTFOUND";
+    }
+
+    @RequestMapping("/page/busy")
+    public String busy(){
+        return "busy";
     }
 }

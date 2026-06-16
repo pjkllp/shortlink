@@ -5,25 +5,23 @@ import com.nageoffer.shortlink.project.common.convention.result.Result;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+
 public class ShortLinkBlockHandler {
     // 限流兜底：静态方法 + 参数匹配 + BlockException
-    public static Result<Void> blockHandlerRestoreUrl(  String shortUri,
+    public static void blockHandlerRestoreUrl(  String shortUri,
                                          HttpServletRequest request,
                                          HttpServletResponse response,
-                                         BlockException ex) {
-        response.setContentType("application/json;charset=utf-8");
-        response.setCharacterEncoding("UTF-8");
-        return Result.fail("请求太快啦，稍后再试~");
+                                         BlockException ex) throws IOException {
+        response.sendRedirect("/page/busy");
     }
 
     // 熔断降级兜底：静态方法 + 参数匹配 + Throwable
-    public static Result<Void> restoreUrlFallback( String shortUri,
+    public static void restoreUrlFallback( String shortUri,
                                          HttpServletRequest request,
                                          HttpServletResponse response,
-                                         Throwable ex) {
-        response.setContentType("application/json;charset=utf-8");
-        response.setCharacterEncoding("UTF-8");
-        return Result.fail("服务繁忙，请稍后重试");
+                                         Throwable ex) throws IOException {
+        response.sendRedirect("/page/busy");
     }
 
 }

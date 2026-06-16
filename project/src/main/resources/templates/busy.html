@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>访问繁忙 · 请稍后重试</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+        }
+
+        body {
+            /* 温柔渐变背景 */
+            background: linear-gradient(120deg, #e0f2fe 0%, #f0f9ff 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        /* 轻奢圆角卡片 */
+        .busy-box {
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(31, 100, 255, 0.08);
+            padding: 60px 45px;
+            max-width: 440px;
+            width: 100%;
+            text-align: center;
+            /* 入场柔和动画 */
+            animation: cardIn 0.5s ease-out;
+        }
+
+        .icon {
+            font-size: 88px;
+            margin-bottom: 28px;
+            color: #3b82f6;
+        }
+
+        h2 {
+            font-size: 26px;
+            color: #1e293b;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        .tip-desc {
+            font-size: 15.5px;
+            color: #64748b;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        .count-text {
+            font-size: 17px;
+            color: #475569;
+        }
+
+        .count-num {
+            font-size: 22px;
+            font-weight: 700;
+            color: #2563eb;
+            margin: 0 4px;
+        }
+
+        @keyframes cardIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="busy-box">
+    <div class="icon">⏳</div>
+    <h2>当前访问流量过高</h2>
+    <p class="tip-desc">
+        短链接请求拥挤繁忙<br>
+        请您耐心等待片刻，稍后重试即可正常访问
+    </p>
+    <div class="count-text">
+        <span class="count-num" id="time">5</span> 秒后自动返回首页
+    </div>
+</div>
+
+<script>
+    // 5秒倒计时自动跳转官网首页
+    let remain = 5;
+    const timeEle = document.getElementById('time');
+    setInterval(() => {
+        remain--;
+        timeEle.innerText = remain;
+        if(remain <= 0){
+            location.href = "/";
+        }
+    }, 1000);
+</script>
+</body>
+</html>

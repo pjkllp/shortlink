@@ -68,9 +68,8 @@ public class ShortLinkController {
             fallbackClass = ShortLinkBlockHandler.class
     )
     @GetMapping("/{short-uri}")
-    public Result<Void> restoreUrl(@PathVariable("short-uri")String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
+    public void restoreUrl(@PathVariable("short-uri")String shortUri, HttpServletRequest request, HttpServletResponse response) throws IOException, InterruptedException {
         shortLinkService.restoreUrl(shortUri,request,response);
-        return Result.success();
     }
 
 }

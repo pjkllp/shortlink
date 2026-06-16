@@ -19,7 +19,8 @@ public class InterceptorConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(setInterceptor)
                 .addPathPatterns("/**")
-                        .excludePathPatterns("/*");
+                        .excludePathPatterns("/*")
+                .excludePathPatterns("/page/**");
         registry.addInterceptor(adminAccessInterceptor)
                 .addPathPatterns("/api/short-link/project/v1/monitor/**");
     }
