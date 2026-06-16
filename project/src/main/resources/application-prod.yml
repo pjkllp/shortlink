@@ -14,7 +14,7 @@ spring:
       write-dates-as-timestamps: false
   datasource:
     driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
-    url: jdbc:shardingsphere:classpath:shardingsphere-config.yaml
+    url: jdbc:shardingsphere:classpath:shardingsphere-config-prod.yaml
     hikari:
       pool-name: HikariPool-ShortLink
       # 2核4G服务器核心配置
